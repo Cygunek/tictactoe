@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kółko i Krzyżyk - Edycja MULTIPLAYER ONLINE</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background 0.5s ease, color 0.3s ease;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background-size: 400% 400%;
+            padding: 30px 20px 80px 20px;
+            position: relative;
+        }
+
+        /* --- MOTYWY GRADIENTOWE --- */
+        body.theme-friendly { background: linear-gradient(-45deg, #e3f2fd, #bbdefb, #e0f2f1, #e8eaf6); animation: gradientAnim 12s ease infinite; }
+        body.theme-friendly h1 { color: #1e3a8a; }
+        body.theme-friendly .main-box, body.theme-friendly .profile-sidebar { background: rgba(255, 255, 255, 0.95); box-shadow: 0 10px 30px rgba(30, 58, 138, 0.15); }
+        body.theme-friendly footer { color: #64748b; } body.theme-friendly footer a { color: #1e3a8a; }
+        body.theme-friendly th { background-color: #3b82f6; color: white; }
+        body.theme-friendly tr:nth-child(even) { background-color: #f1f5f9; }
+
+        body.theme-aggressive { background: linear-gradient(-45deg, #1a0505, #450a0a, #0f0505, #2a0808); animation: gradientAnim 6s ease infinite; }
+        body.theme-aggressive h1 { color: #f43f5e; text-shadow: 0 0 15px rgba(244, 63, 94, 0.6); }
+        body.theme-aggressive .main-box, body.theme-aggressive .profile-sidebar { background: rgba(20, 10, 10, 0.95); border: 1px solid #f43f5e; box-shadow: 0 10px 40px rgba(244, 63, 94, 0.3); color: #f3f4f6; }
+        body.theme-aggressive .player-setup-box { background: rgba(40, 20, 20, 0.8); border-color: #5c1d24; }
+        body.theme-aggressive label { color: #e5e7eb !important; }
+        body.theme-aggressive #status, body.theme-aggressive .scoreboard { background: #281414; color: #fff; }
+        body.theme-aggressive footer { color: #f43f5e; } body.theme-aggressive footer a { color: #fda4af; }
+        body.theme-aggressive table, body.theme-aggressive th, body.theme-aggressive td { border-color: #5c1d24; }
+        body.theme-aggressive th { background-color: #991b1b; color: white; }
+        body.theme-aggressive tr:nth-child(even) { background-color: rgba(244, 63, 94, 0.1); }
+
+        body.theme-competition { background: linear-gradient(-45deg, #2e1065, #4c1d95, #0f172a, #3b0764); animation: gradientAnim 9s ease infinite; }
+        body.theme-competition h1 { color: #f59e0b; text-shadow: 0 0 12px rgba(245, 158, 11, 0.5); }
+        body.theme-competition .main-box, body.theme-competition .profile-sidebar { background: rgba(30, 27, 75, 0.95); border: 1px solid #8b5cf6; box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4); color: #f3f4f6; }
+        body.theme-competition .player-setup-box { background: rgba(49, 46, 129, 0.8); border-color: #4338ca; }
+        body.theme-competition label { color: #e5e7eb !important; }
+        body.theme-competition #status, body.theme-competition .scoreboard { background: #312e81; color: #fff; }
+        body.theme-competition footer { color: #a78bfa; } body.theme-competition footer a { color: #f59e0b; }
+        body.theme-competition table, body.theme-competition th, body.theme-competition td { border-color: #4338ca; }
+        body.theme-competition th { background-color: #6d28d9; color: #f59e0b; }
+        body.theme-competition tr:nth-child(even) { background-color: rgba(139, 92, 246, 0.15); }
+
+        @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* --- MASKOTKI W TLE --- */
+        .bg-character { position: absolute; font-size: 3.5rem; user-select: none; pointer-events: none; z-index: 1; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.15)); animation: floatAnimation 6s ease-in-out infinite alternate; }
+        .char1 { top: 8%; left: 4%; animation-duration: 5s; } .char2 { top: 82%; left: 5%; animation-duration: 7s; animation-delay: 1s; }
+        .char3 { top: 10%; right: 4%; animation-duration: 6s; animation-delay: 0.5s; } .char4 { top: 78%; right: 5%; animation-duration: 8s; animation-delay: 1.5s; }
+        @keyframes floatAnimation { 0% { transform: translateY(0px) rotate(0deg); } 100% { transform: translateY(-20px) rotate(10deg); } }
+
+        h1 { font-size: 3.5rem; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; text-align: center; z-index: 5; }
+
+        /* --- UKŁAD GłÓWNY --- */
+        .app-layout { display: flex; gap: 30px; max-width: 1050px; width: 100%; align-items: flex-start; justify-content: center; z-index: 5; }
+
+        /* --- STAŁY PANEL BOCZNY PROFILU --- */
+        .profile-sidebar { width: 280px; padding: 20px; border-radius: 15px; display: none; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border: 2px solid rgba(30, 58, 138, 0.1); }
+        .sidebar-avatar { font-size: 4rem; background: #e2e8f0; width: 85px; height: 85px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 12px; border: 3px solid #1e3a8a; }
+        .sidebar-info h3 { font-size: 1.3rem; color: #1e3a8a; margin-bottom: 2px; }
+        .sidebar-info .player-id { font-size: 0.85rem; color: #64748b; font-weight: bold; margin-bottom: 15px; }
+        .sidebar-stats { background: rgba(255,255,255,0.6); padding: 10px; width: 100%; border-radius: 8px; margin-bottom: 20px; border: 1px solid #cbd5e1; }
+        .sidebar-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+
+        /* --- CENTRUM APLIKACJI --- */
+        .main-box { padding: 25px; border-radius: 15px; width: 500px; display: none; }
+        .auth-container { display: block; margin: 0 auto; }
+
+        /* --- FORMULARZE I PRZYCISKI --- */
+        .input-group { margin-bottom: 12px; text-align: left; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 4px; color: #4b5563; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; background: white; color: #000; }
+        .input-group input:focus, .input-group select:focus { border-color: #3b82f6; }
+
+        .btn-primary { background-color: #1e3a8a; color: white; border: none; padding: 11px; font-size: 1rem; font-weight: bold; border-radius: 25px; cursor: pointer; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-top: 5px; }
+        .btn-primary:hover { filter: brightness(1.2); }
+        .btn-link { background: none; border: none; color: #3b82f6; font-weight: bold; cursor: pointer; text-decoration: underline; margin-top: 10px; font-size: 0.95rem; }
+        
+        .sidebar-btn { border: none; padding: 8px; font-size: 0.9rem; font-weight: bold; border-radius: 8px; cursor: pointer; color: white; width: 100%; }
+        .btn-sidebar-edit { background-color: #f59e0b; } .btn-sidebar-friends { background-color: #3b82f6; } .btn-sidebar-logout { background-color: #ef4444; }
+
+        .player-setup-box { padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; background: rgba(255,255,255,0.4); }
+        .radio-group { display: flex; justify-content: center; gap: 15px; margin: 8px 0; }
+        .radio-label { font-size: 0.95rem; font-weight: bold; cursor: pointer; padding: 6px 14px; border: 2px solid #cbd5e1; border-radius: 8px; background: white; color: #000; }
+        #p1-choose-x:checked + .radio-label-p1-x, #p2-choose-x:checked + .radio-label-p2-x { border-color: #ef4444; background-color: #fef2f2; color: #ef4444; }
+        #p1-choose-o:checked + .radio-label-p1-o, #p2-choose-o:checked + .radio-label-p2-o { border-color: #22c55e; background-color: #f0fdf4; color: #22c55e; }
+        .radio-group input { display: none; }
+        .error-text { color: #ef4444; font-weight: bold; margin-bottom: 12px; display: none; text-align: center; }
+
+        /* --- MULTIPLAYER ROOM PANEL --- */
+        .online-panel { background: rgba(59, 130, 246, 0.1); border: 2px solid #3b82f6; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center; }
+        .share-link-box { background: white; color: #000; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; font-size: 0.85rem; margin-top: 8px; word-break: break-all; user-select: all; cursor: pointer; font-weight: bold; }
+
+        /* --- SALA SŁAW --- */
+        table { width: 100%; border-collapse: collapse; background: white; color: #000; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; margin-top: 10px; }
+        th, td { padding: 8px 12px; text-align: center; font-size: 0.95rem; border-bottom: 1px solid #cbd5e1; }
+
+        /* --- PLANSZA --- */
+        .game-container { flex-direction: column; align-items: center; }
+        .scoreboard { display: flex; gap: 30px; padding: 10px 25px; background: white; border-radius: 15px; margin-bottom: 15px; font-size: 1.1rem; font-weight: bold; color: #333; width: 100%; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .score-box span { display: block; font-size: 1.8rem; margin-top: 2px; }
+        #status { font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; color: #333; background: white; padding: 6px 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; }
+        
+        .board-wrapper { position: relative; }
+        .board { display: grid; grid-template-columns: repeat(3, 120px); grid-template-rows: repeat(3, 120px); border: 6px solid #000000; background-color: #000000; gap: 5px; border-radius: 12px; overflow: hidden; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); }
+        .cell { background-color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; font-weight: bold; cursor: pointer; user-select: none; color: #000; }
+        .cell:hover { background-color: #f8fafc; }
+        .cell.X { color: #ef4444; } .cell.O { color: #22c55e; }
+
+        .next-round-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); color: white; border-radius: 12px; flex-direction: column; justify-content: center; align-items: center; z-index: 15; font-size: 2.5rem; font-weight: bold; }
+        .next-round-overlay span { font-size: 1.5rem; margin-top: 10px; color: #94a3b8; }
+
+        /* --- POP-UPY MODALNE --- */
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 100; color: #000; }
+        .popup { background: white; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.4); max-width: 400px; width: 90%; }
+        .animated-winner-sign { font-size: 5.5rem; animation: gifEffect 1.2s ease-in-out infinite alternate; display: inline-block; margin-bottom: 10px; }
+        @keyframes gifEffect { 0% { transform: scale(0.9) rotate(-5deg); } 100% { transform: scale(1.1) rotate(5deg); } }
+        
+        .avatar-selection { display: flex; justify-content: center; gap: 12px; font-size: 2.2rem; margin: 15px 0; }
+        .avatar-opt { cursor: pointer; padding: 5px; border-radius: 50%; border: 2px solid transparent; }
+        .avatar-opt.selected { border-color: #3b82f6; background: #e2e8f0; }
+
+        .friends-list { max-height: 150px; overflow-y: auto; margin-top: 10px; text-align: left; }
+        .friend-item { display: flex; justify-content: space-between; padding: 6px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; align-items: center; }
+
+        footer { position: absolute; bottom: 15px; left: 0; width: 100%; text-align: center; font-size: 0.9rem; font-weight: 500; z-index: 10; }
+        footer a { text-decoration: none; font-weight: bold; } footer a:hover { text-decoration: underline; }
+        .confetti { position: absolute; width: 10px; height: 10px; z-index: 99; pointer-events: none; animation: confettiFall 4s linear infinite; }
+        @keyframes confettiFall { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+    </style>
+</head>
+<body class="theme-friendly" id="game-body">
+
+    <div class="bg-character char1" id="char1">🐱</div>
+    <div class="bg-character char2" id="char2">🍩</div>
+    <div class="bg-character char3" id="char3">🧁</div>
+    <div class="bg-character char4" id="char4">🐱</div>
+
+    <h1>Kółko i Krzyżyk</h1>
+
+    <div class="app-layout">
+        
+        <div class="profile-sidebar" id="sidebar-panel">
+            <div class="sidebar-avatar" id="side-avatar-icon">🐱</div>
+            <div class="sidebar-info">
+                <h3 id="side-username">Nick</h3>
+                <div class="side-player-id" id="side-id-val">#0000</div>
+            </div>
+            <div class="sidebar-stats">
+                <p>Wygrane Turnieje: <strong id="side-wins-val" style="color:#16a34a; font-size:1.3rem;">0</strong></p>
+            </div>
+            <div class="sidebar-actions">
+                <button class="sidebar-btn btn-sidebar-edit" id="btn-side-edit">Edytuj Profil</button>
+                <button class="sidebar-btn btn-sidebar-friends" id="btn-side-friends">Znajomi</button>
+                <button class="sidebar-btn btn-sidebar-logout" id="btn-side-logout">Wyloguj Się</button>
+            </div>
+        </div>
+
+        <div>
+            <div class="main-box auth-container" id="auth-screen">
+                <h2 id="auth-title" style="text-align:center; color:#1e3a8a; margin-bottom:15px;">Logowanie</h2>
+                <div class="error-text" id="auth-error">Błędne dane!</div>
+                
+                <div class="input-group">
+                    <label for="auth-username">Nazwa Użytkownika:</label>
+                    <input type="text" id="auth-username" placeholder="Wpisz swój nick">
+                </div>
+                <div class="input-group">
+                    <label for="auth-password">Hasło:</label>
+                    <input type="password" id="auth-password" placeholder="Wpisz hasło">
+                </div>
+
+                <button class="btn-primary" id="btn-auth-submit">Zaloguj Się</button>
+                <center><button class="btn-link" id="btn-auth-toggle">Nie masz konta? Zarejestruj się</button></center>
+            </div>
+
+            <div class="main-box" id="setup-screen">
+                <h2 style="margin-bottom:15px; text-align:center;">Ustawienia Meczu</h2>
+                
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label for="theme-select">Wybierz Styl/Motyw Gry:</label>
+                    <select id="theme-select" style="font-weight: bold;">
+                        <option value="friendly">😊 Przyjazny (Kotki i słodkości)</option>
+                        <option value="aggressive">🔥 Agresywny (Mroczny i ognisty)</option>
+                        <option value="competition">🏆 Konkurencja (Gamer / E-sport)</option>
+                    </select>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label for="game-mode-select">Tryb rozgrywki:</label>
+                    <select id="game-mode-select" style="font-weight: bold; border: 2px solid #3b82f6;">
+                        <option value="local">🖥️ Gra Lokalna (Dwaj gracze na 1 komputerze)</option>
+                        <option value="online">🌐 Gra ONLINE (Stwórz pokój lub dołącz kodem)</option>
+                    </select>
+                </div>
+
+                <div id="online-setup-box" style="display:none;" class="online-panel">
+                    <h4 style="color:#2563eb; margin-bottom:10px;">🛡️ Pokój Gry Online</h4>
+                    <p id="online-status-lbl" style="font-size:0.9rem; font-weight:bold; color:#d97706; margin-bottom:8px;">Inicjalizacja sieci multiplayer...</p>
+                    <div id="online-room-details" style="display:none;">
+                        <p style="font-size:0.9rem;">Twój kod meczu dla znajomego:</p>
+                        <h3 id="room-id-display" style="letter-spacing:2px; color:#1e3a8a; margin:5px 0;">XXXXX</h3>
+                        <p style="font-size:0.85rem; color:#4b5563;">Lub wyślij bezpośredni link:</p>
+                        <div class="share-link-box" id="room-link-display" title="Kliknij, aby skopiować">Wczytywanie linku...</div>
+                    </div>
+                    <div style="margin-top:12px; border-top:1px solid #3b82f6; padding-top:10px;">
+                        <label style="font-weight:bold; font-size:0.85rem; display:block; text-align:left; margin-bottom:4px;">Chcesz dołączyć do istniejącego pokoju? Wpisz kod:</label>
+                        <input type="text" id="join-room-input" placeholder="Wklej kod pokoju znajomego" style="padding:6px; border-radius:5px; border:1px solid #cbd5e1; width:70%; text-transform:uppercase;">
+                        <button id="btn-join-room-submit" style="padding:6px 12px; background:#22c55e; border:none; color:white; border-radius:5px; font-weight:bold; cursor:pointer;">Dołącz</button>
+                    </div>
+                </div>
+
+                <div class="player-setup-box" id="p1-box-container">
+                    <div class="input-group">
+                        <label for="p1-name">Gracz 1 (Ty):</label>
+                        <input type="text" id="p1-name" readonly>
+                    </div>
+                    <div class="radio-group">
+                        <input type="radio" id="p1-choose-x" name="p1-sign" value="X" checked>
+                        <label for="p1-choose-x" class="radio-label radio-label-p1-x">Wybierz X</label>
+                        <input type="radio" id="p1-choose-o" name="p1-sign" value="O">
+                        <label for="p1-choose-o" class="radio-label radio-label-p1-o">Wybierz O</label>
+                    </div>
+                </div>
+
+                <div class="player-setup-box" id="p2-box-container">
+                    <div class="input-group">
+                        <label for="p2-name">Gracz 2 (Nazwa przeciwnika):</label>
+                        <input type="text" id="p2-name" value="Gracz 2">
+                    </div>
+                    <div class="radio-group">
+                        <input type="radio" id="p2-choose-x" name="p2-sign" value="X">
+                        <label for="p2-choose-x" class="radio-label radio-label-p2-x">Wybierz X</label>
+                        <input type="radio" id="p2-choose-o" name="p2-sign" value="O" checked>
+                        <label for="p2-choose-o" class="radio-label radio-label-p2-o">Wybierz O</label>
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label for="max-rounds">Graj do określonej liczby wygranych rund:</label>
+                    <select id="max-rounds">
+                        <option value="1">1 wygrana runda</option>
+                        <option value="3" selected>3 wygrane rundy</option>
+                        <option value="5">5 wygranych rund</option>
+                        <option value="8">8 wygranych rund</option>
+                        <option value="12">12 wygranych rund</option>
+                        <option value="15">15 wygranych rund</option>
+                        <option value="20">20 wygranych rund</option>
+                    </select>
+                </div>
+                
+                <div class="error-text" id="error-msg">Gracze nie mogą mieć tego samego znaku!</div>
+                <button class="btn-primary" id="start-game-btn">Rozpocznij Mecz</button>
+
+                <div style="margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 15px;">
+                    <h3>🏆 Sala Sław (Zarejestrowani Gracze)</h3>
+                    <table id="leaderboard-table">
+                        <thead>
+                            <tr><th style="width: 20%;">Top</th><th>Gracz</th><th style="width: 30%;">Turnieje</th></tr>
+                        </thead>
+                        <tbody id="leaderboard-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="main-box game-container" id="game-screen">
+                <div class="scoreboard">
+                    <div class="score-box"><div id="score-p1-name">Gracz 1</div><span id="score-p1-val" class="player-x">0</span></div>
+                    <div style="font-size: 1.5rem; align-self: center; color: #94a3b8;">:</div>
+                    <div class="score-box"><div id="score-p2-name">Gracz 2</div><span id="score-p2-val" class="player-o">0</span></div>
+                </div>
+
+                <div id="status">Tura...</div>
+
+                <div class="board-wrapper">
+                    <div class="next-round-overlay" id="next-round-screen"><div id="next-round-title">Runda 2</div><span id="next-round-sub">..</span></div>
+                    <div class="board" id="board">
+                        <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
+                        <div class="cell" data-index="3"></div><div class="cell" data-index="4"></div><div class="cell" data-index="5"></div>
+                        <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
+                    </div>
+                </div>
+                <button class="btn-primary" id="reset-btn" style="margin-top: 25px;">Wyjdź do Menu</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="overlay" id="win-overlay">
+        <div class="popup">
+            <div class="animated-winner-sign" id="popup-symbol">🏆</div>
+            <h2 id="popup-text">Mistrz!</h2><p id="popup-subtext">Wynik.</p>
+            <button class="btn-primary" id="popup-close-btn">Zagraj od nowa 🔄</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="edit-profile-overlay">
+        <div class="popup">
+            <h3>Edytuj Swój Profil</h3><br>
+            <div class="input-group">
+                <label for="edit-input-name">Nowy Nick:</label>
+                <input type="text" id="edit-input-name">
+            </div>
+            <label style="font-weight:bold; display:block; text-align:left; color:#4b5563;">Wybierz Awatar:</label>
+            <div class="avatar-selection">
+                <span class="avatar-opt" data-av="🐱">🐱</span>
+                <span class="avatar-opt" data-av="🦊">🦊</span>
+                <span class="avatar-opt" data-av="🦁">🦁</span>
+                <span class="avatar-opt" data-av="🤖">🤖</span>
+                <span class="avatar-opt" data-av="🥷">🥷</span>
+            </div>
+            <button class="btn-primary" id="btn-profile-save">Zapisz Zmiany</button>
+            <button class="btn-link" onclick="document.getElementById('edit-profile-overlay').style.display='none'">Anuluj</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="friends-overlay">
+        <div class="popup">
+            <h3>🤝 Panel Znajomych</h3><br>
+            <div class="input-group">
+                <label for="friend-search-input">Dodaj znajomego (Wpisz dokładnie Nick lub numer ID):</label>
+                <input type="text" id="friend-search-input" placeholder="Nick lub ID gracza">
+            </div>
+            <div id="friend-error" style="color:#ef4444; font-weight:bold; font-size:0.85rem; margin-bottom:5px; display:none;">Komunikat</div>
+            <button class="btn-primary" style="padding:6px; font-size:0.95rem;" id="btn-add-friend-submit">Dodaj do listy</button>
+            
+            <h4 style="margin-top:15px; text-align:left; font-size:0.95rem; border-bottom:1px solid #cbd5e1; padding-bottom:3px;">Twoi Znajomi:</h4>
+            <div class="friends-list" id="friends-list-container"></div>
+            <button class="btn-primary" onclick="document.getElementById('friends-overlay').style.display='none'">Zamknij</button>
+        </div>
+    </div>
+
+    <footer>© Copyright 2026 All Rights Reserved | Wsparcie: <a href="mailto:pomoc@kolokrzyzyk.pl">pomoc@kolokrzyzyk.pl</a></footer>
+
+    <script>
+        let usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
+        let currentUserKey = sessionStorage.getItem('loggedUserKey_v2') || null; 
+
+        // Selektory okien i widoków
+        const authScreen = document.getElementById('auth-screen');
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const sidebarPanel = document.getElementById('sidebar-panel');
+        const bodyEl = document.getElementById('game-body');
+        const gameModeSelect = document.getElementById('game-mode-select');
+        const onlineSetupBox = document.getElementById('online-setup-box');
+
+        // Autoryzacja
+        let isRegisterMode = false;
+        const authTitle = document.getElementById('auth-title');
+        const btnAuthSubmit = document.getElementById('btn-auth-submit');
+        const btnAuthToggle = document.getElementById('btn-auth-toggle');
+        const authError = document.getElementById('auth-error');
+        const authUserIn = document.getElementById('auth-username');
+        const authPassIn = document.getElementById('auth-password');
+
+        // Silnik gry podstawowe dane
+        let player1 = { name: "Gracz 1", sign: "X", score: 0 };
+        let player2 = { name: "Gracz 2", sign: "O", score: 0 };
+        let currentPlayer = 'X';
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+        let isGameActive = true;
+        let currentRoundNumber = 1;
+        let maxWinningRounds = 3;
+        let confettiInterval;
+
+        // MULTIPLAYER ONLINE zmienne sieciowe
+        let isMultiplayerOnline = false;
+        let peer = null;
+        let netConnection = null;
+        let amIRoomHost = false;
+        let myOnlineSign = 'X';
+
+        const cells = document.querySelectorAll('.cell');
+        const winningConditions = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        const themeCharacters = { friendly: ['🐱','🍩','🧁','🐱'], aggressive: ['🔥','😈','⚡','🔥'], competition: ['🏆','👑','🎮','👑'] };
+
+        // --- OBSŁUGA LOGOWANIA / REJESTRACJI ---
+        btnAuthToggle.addEventListener('click', () => {
+            isRegisterMode = !isRegisterMode;
+            authTitle.textContent = isRegisterMode ? "Rejestracja Nowego Konta" : "Logowanie";
+            btnAuthSubmit.textContent = isRegisterMode ? "Zarejestruj Się" : "Zaloguj Się";
+            btnAuthToggle.textContent = isRegisterMode ? "Masz już konto? Zaloguj się" : "Nie masz konta? Zarejestruj się";
+            authError.style.display = 'none';
+        });
+
+        btnAuthSubmit.addEventListener('click', () => {
+            const username = authUserIn.value.trim();
+            const password = authPassIn.value.trim();
+
+            if(!username || !password) { showAuthError("Uzupełnij wszystkie dane!"); return; }
+
+            if(isRegisterMode) {
+                if(usersDB[username.toLowerCase()]) { showAuthError("Ten login jest już zajęty!"); return; }
+                const randomID = Math.floor(1000 + Math.random() * 9000).toString();
+                usersDB[username.toLowerCase()] = { username: username, password: password, id: randomID, avatar: "🐱", wins: 0, friends: [] };
+                saveData();
+                isRegisterMode = false;
+                btnAuthToggle.click();
+                showAuthError("Konto zarejestrowane! Zaloguj się.", "#16a34a");
+            } else {
+                const user = usersDB[username.toLowerCase()];
+                if(user && user.password === password) {
+                    currentUserKey = username.toLowerCase();
+                    sessionStorage.setItem('loggedUserKey_v2', currentUserKey);
+                    refreshUserSession();
+                    checkUrlParametersForRoom(); // Sprawdzenie, czy wepchnięto link zaproszenia
+                } else { showAuthError("Nieprawidłowy login lub hasło!"); }
+            }
+        });
+
+        function showAuthError(msg, color = "#ef4444") {
+            authError.textContent = msg; authError.style.color = color; authError.style.display = 'block';
+        }
+        function saveData() { localStorage.setItem('usersDB_v2', JSON.stringify(usersDB)); }
+
+        // --- AKTUALIZACJA PROFILU I PANELU BOCZNEGO ---
+        function refreshUserSession() {
+            if(!currentUserKey) {
+                authScreen.style.display = 'block'; setupScreen.style.display = 'none'; gameScreen.style.display = 'none'; sidebarPanel.style.display = 'none';
+                return;
+            }
+            authScreen.style.display = 'none'; setupScreen.style.display = 'block'; sidebarPanel.style.display = 'flex';
+
+            const user = usersDB[currentUserKey];
+            document.getElementById('p1-name').value = user.username;
+            document.getElementById('side-avatar-icon').textContent = user.avatar;
+            document.getElementById('side-username').textContent = user.username;
+            document.getElementById('side-id-val').textContent = `#${user.id}`;
+            document.getElementById('side-wins-val').textContent = user.wins;
+
+            updateLeaderboardUI();
+        }
+
+        document.getElementById('btn-side-logout').addEventListener('click', () => {
+            sessionStorage.removeItem('loggedUserKey_v2'); currentUserKey = null;
+            if(peer) peer.destroy();
+            refreshUserSession();
+        });
+
+        // Edycja Profilu Modal
+        let profileAvatarTemp = "🐱";
+        document.getElementById('btn-side-edit').addEventListener('click', () => {
+            const user = usersDB[currentUserKey]; document.getElementById('edit-input-name').value = user.username;
+            profileAvatarTemp = user.avatar;
+            document.querySelectorAll('.avatar-opt').forEach(opt => { opt.classList.toggle('selected', opt.getAttribute('data-av') === profileAvatarTemp); });
+            document.getElementById('edit-profile-overlay').style.display = 'flex';
+        });
+
+        document.querySelectorAll('.avatar-opt').forEach(opt => {
+            opt.addEventListener('click', () => {
+                profileAvatarTemp = opt.getAttribute('data-av');
+                document.querySelectorAll('.avatar-opt').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+            });
+        });
+
+        document.getElementById('btn-profile-save').addEventListener('click', () => {
+            const updatedName = document.getElementById('edit-input-name').value.trim(); if(!updatedName) return;
+            const user = usersDB[currentUserKey]; user.username = updatedName; user.avatar = profileAvatarTemp;
+            saveData(); document.getElementById('edit-profile-overlay').style.display = 'none'; refreshUserSession();
+        });
+
+        // System znajomych
+        document.getElementById('btn-side-friends').addEventListener('click', () => {
+            renderFriends(); document.getElementById('friend-error').style.display = 'none'; document.getElementById('friend-search-input').value = '';
+            document.getElementById('friends-overlay').style.display = 'flex';
+        });
+
+        document.getElementById('btn-add-friend-submit').addEventListener('click', () => {
+            const query = document.getElementById('friend-search-input').value.trim().toLowerCase();
+            const labelErr = document.getElementById('friend-error'); if(!query) return;
+            const myAccount = usersDB[currentUserKey]; let foundKey = null;
+
+            for (let key in usersDB) {
+                if (key === query || `#${usersDB[key].id}` === query || usersDB[key].id === query) {
+                    if (key !== currentUserKey) { foundKey = key; break; }
+                }
+            }
+            if(foundKey && !myAccount.friends.includes(foundKey)) {
+                myAccount.friends.push(foundKey); saveData(); renderFriends();
+                labelErr.style.display = 'block'; labelErr.textContent = "Dodano gracza do listy!"; labelErr.style.color = "#16a34a";
+            } else if (foundKey) { labelErr.textContent = "Ten gracz jest już na liście."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
+            else { labelErr.textContent = "Nie odnaleziono konta!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
+        });
+
+        function renderFriends() {
+            const container = document.getElementById('friends-list-container'); container.innerHTML = '';
+            const myAccount = usersDB[currentUserKey];
+            if(!myAccount.friends || myAccount.friends.length === 0) { container.innerHTML = '<p style="font-style:italic; color:#64748b;">Brak wpisów.</p>'; return; }
+            myAccount.friends.forEach(fKey => {
+                const fData = usersDB[fKey]; if(!fData) return;
+                const div = document.createElement('div'); div.className = 'friend-item';
+                div.innerHTML = `<span>${fData.avatar} <strong>${fData.username}</strong> #${fData.id}</span> <button onclick="quickInviteOnline('${fData.id}')" style="padding:2px 6px; background:#3b82f6; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">Zaproś</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        function quickInviteOnline(id) {
+            document.getElementById('friends-overlay').style.display = 'none';
+            gameModeSelect.value = "online";
+            handleGameModeChange();
+            document.getElementById('join-room-input').value = id;
+        }
+
+        // --- ZMIANA SYSTEMU TRYBU GRY (LOKALNA / MULTIPLAYER ONLINE) ---
+        gameModeSelect.addEventListener('change', handleGameModeChange);
+
+        function handleGameModeChange() {
+            if (gameModeSelect.value === "online") {
+                isMultiplayerOnline = true;
+                onlineSetupBox.style.display = "block";
+                document.getElementById('p2-box-container').style.display = "none"; // Gracz 2 ładuje się automatycznie z sieci
+                initPeerNetwork();
+            } else {
+                isMultiplayerOnline = false;
+                onlineSetupBox.style.display = "none";
+                document.getElementById('p2-box-container').style.display = "block";
+                if (peer) { peer.destroy(); peer = null; }
+                document.getElementById('p1-name').removeAttribute('readonly');
+            }
+        }
+
+        // Kopiowanie linku pokoju przy kliknięciu w okienko tekstowe
+        document.getElementById('room-link-display').addEventListener('click', function() {
+            navigator.clipboard.writeText(this.textContent);
+            alert("Skopiowano link zaproszenia do schowka! Wyślij go znajomemu.");
+        });
+
+        // --- LOGIKA NETWORKINGU P2P (PEERJS / WEBRTC) ---
+        function initPeerNetwork() {
+            if (peer) return;
+            document.getElementById('online-status-lbl').textContent = "Łączenie z darmową siecią multiplayer...";
+            document.getElementById('online-room-details').style.display = "none";
+
+            // Tworzenie losowego unikalnego identyfikatora pokoju o długości 5 znaków
+            const roomId = "KIK" + Math.floor(1000 + Math.random() * 9000);
+
+            // Inicjalizacja klienta P2P na bezpłatnych serwerach PeerJS cloud
+            peer = new Peer(roomId);
+
+            peer.on('open', (id) => {
+                amIRoomHost = true;
+                document.getElementById('online-status-lbl').textContent = "Oczekiwanie na połączenie drugiego gracza...";
+                document.getElementById('online-room-details').style.display = "block";
+                document.getElementById('room-id-display').textContent = id;
+                
+                // Generowanie bezpośredniego linku url na podstawie aktualnego adresu strony
+                const inviteUrl = window.location.origin + window.location.pathname + "?room=" + id;
+                document.getElementById('room-link-display').textContent = inviteUrl;
+            });
+
+            peer.on('connection', (conn) => {
+                netConnection = conn;
+                setupNetworkListeners();
+            });
+
+            peer.on('error', (err) => {
+                console.error("Błąd połączenia sieciowego:", err);
+                document.getElementById('online-status-lbl').textContent = "Błąd sieci. Spróbuj ponownie za chwilę.";
+            });
+        }
+
+        // Dołączenie ręczne przy użyciu kodu z pola tekstowego
+        document.getElementById('btn-join-room-submit').addEventListener('click', () => {
+            const targetRoomId = document.getElementById('join-room-input').value.trim().toUpperCase();
+            if(!targetRoomId) return;
+            connectToRoom(targetRoomId);
+        });
+
+        function connectToRoom(targetId) {
+            if (peer) { peer.destroy(); peer = null; }
+            
+            document.getElementById('online-status-lbl').textContent = "Łączenie z pokojem " + targetId + "...";
+            peer = new Peer(); // Tworzenie klienta z losowym ID
+
+            peer.on('open', (myId) => {
+                amIRoomHost = false;
+                const conn = peer.connect(targetId);
+                netConnection = conn;
+                setupNetworkListeners();
+            });
+
+            peer.on('error', (err) => {
+                alert("Nie udało się dołączyć. Sprawdź poprawność kodu pokoju.");
+                handleGameModeChange();
+            });
+        }
+
+        // Funkcja sprawdzająca parametry linku na starcie
+        function checkUrlParametersForRoom() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomParam = urlParams.get('room');
+            if (roomParam && currentUserKey) {
+                gameModeSelect.value = "online";
+                handleGameModeChange();
+                setTimeout(() => { connectToRoom(roomParam.toUpperCase()); }, 1000);
+            }
+        }
+
+        // Główny system nasłuchiwania pakietów danych multiplayer
+        function setupNetworkListeners() {
+            netConnection.on('open', () => {
+                document.getElementById('online-status-lbl').innerHTML = "🟢 Połączono z rywalem! Gotowi do gry.";
+                
+                // Wymiana nazw graczy
+                const myName = usersDB[currentUserKey].username;
+                netConnection.send({ type: 'init-names', name: myName, hostSign: document.querySelector('input[name="p1-sign"]:checked').value });
+            });
+
+            netConnection.on('data', (data) => {
+                if (data.type === 'init-names') {
+                    player1.name = amIRoomHost ? usersDB[currentUserKey].username : data.name;
+                    player2.name = amIRoomHost ? data.name : usersDB[currentUserKey].username;
+                    
+                    if (amIRoomHost) {
+                        myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
+                        netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: parseInt(document.getElementById('max-rounds').value) });
+                    }
+                }
+
+                if (data.type === 'confirm-signs') {
+                    maxWinningRounds = data.rounds;
+                    if (!amIRoomHost) {
+                        myOnlineSign = data.hostSign === 'X' ? 'O' : 'X';
+                        player1.sign = myOnlineSign;
+                        player2.sign = data.hostSign;
+                    } else {
+                        player1.sign = myOnlineSign;
+                        player2.sign = myOnlineSign === 'X' ? 'O' : 'X';
+                    }
+                    launchGameEngine(true);
+                }
+
+                if (data.type === 'move') {
+                    executeMoveOnGrid(data.index, data.sign);
+                }
+
+                if (data.type === 'rematch') {
+                    executeRematchReset();
+                }
+            });
+
+            netConnection.on('close', () => {
+                alert("Połączenie z drugim graczem zostało zerwane.");
+                backToMenu();
+            });
+        }
+
+        // --- URUCHOMIENIE SILNIKA GRY ---
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            if (isMultiplayerOnline) {
+                if (!netConnection) { alert("Poczekaj na połączenie z przeciwnikiem online przed startem meczu!"); return; }
+                if (!amIRoomHost) { alert("Tylko Host (twórca pokoju) może wystartować rozgrywkę!"); return; }
+                
+                player1.name = usersDB[currentUserKey].username;
+                myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
+                maxWinningRounds = parseInt(document.getElementById('max-rounds').value);
+                
+                netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: maxWinningRounds });
+                return;
+            }
+            
+            // Standardowa gra lokalna offline
+            player1.name = document.getElementById('p1-name').value.trim() || "Gracz 1";
+            player2.name = document.getElementById('p2-name').value.trim() || "Gracz 2";
+            player1.sign = document.querySelector('input[name="p1-sign"]:checked').value;
+            player2.sign = document.querySelector('input[name="p2-sign"]:checked').value;
+            maxWinningRounds = parseInt(document.getElementById('max-rounds').value);
+
+            if(player1.sign === player2.sign) { document.getElementById('error-msg').style.display = 'block'; return; }
+            document.getElementById('error-msg').style.display = 'none';
+            launchGameEngine(false);
+        });
+
+        function launchGameEngine(isNetworkActive) {
+            player1.score = 0; player2.score = 0; currentRoundNumber = 1;
+
+            document.getElementById('score-p1-name').textContent = player1.name;
+            document.getElementById('score-p2-name').textContent = player2.name;
+            document.getElementById('score-p1-val').className = player1.sign === 'X' ? 'player-x' : 'player-o';
+            document.getElementById('score-p2-val').className = player2.sign === 'X' ? 'player-x' : 'player-o';
+            
+            refreshScoreboard();
+            currentPlayer = 'X';
+            setupScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            updateStatusText();
+        }
+
+        function refreshScoreboard() {
+            document.getElementById('score-p1-val').textContent = player1.score;
+            document.getElementById('score-p2-val').textContent = player2.score;
+        }
+
+        function updateStatusText() {
+            const activePlayerName = player1.sign === currentPlayer ? player1.name : player2.name;
+            const styleClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
+            
+            let networkSuffix = "";
+            if (isMultiplayerOnline) {
+                networkSuffix = (myOnlineSign === currentPlayer) ? " (Twój ruch)" : " (Ruch rywala)";
+            }
+
+            document.getElementById('status').innerHTML = `Runda ${currentRoundNumber} | Tura: <strong>${activePlayerName}</strong> (<span class="${styleClass}">${currentPlayer}</span>)${networkSuffix}<br><small>Cel: Wygrana ${maxWinningRounds} rund</small>`;
+        }
+
+        function handleCellClick(e) {
+            const cell = e.target;
+            const idx = parseInt(cell.getAttribute('data-index'));
+            if(gameState[idx] !== "" || !isGameActive) return;
+
+            // Blokada klikania, jeśli ruch należy do przeciwnika online
+            if (isMultiplayerOnline && currentPlayer !== myOnlineSign) return;
+
+            if (isMultiplayerOnline) {
+                netConnection.send({ type: 'move', index: idx, sign: myOnlineSign });
+            }
+
+            executeMoveOnGrid(idx, currentPlayer);
+        }
+
+        function executeMoveOnGrid(idx, sign) {
+            gameState[idx] = sign;
+            cells[idx].textContent = sign;
+            cells[idx].classList.add(sign);
+            checkResult();
+        }
+
+        function checkResult() {
+            let roundWon = false;
+            for(let condition of winningConditions) {
+                if(gameState[condition[0]]==='' || gameState[condition[1]]==='' || gameState[condition[2]]==='') continue;
+                if(gameState[condition[0]] === gameState[condition[1]] && gameState[condition[1]] === gameState[condition[2]]) { roundWon = true; break; }
+            }
+
+            if(roundWon) {
+                isGameActive = false;
+                let roundWinnerName = "";
+                if(player1.sign === currentPlayer) { player1.score++; roundWinnerName = player1.name; } 
+                else { player2.score++; roundWinnerName = player2.name; }
+                refreshScoreboard();
+
+                if(player1.score === maxWinningRounds || player2.score === maxWinningRounds) {
+                    handleFinalGameVictory(player1.score === maxWinningRounds ? player1 : player2);
+                } else {
+                    triggerRoundTransition(roundWinnerName);
+                }
+                return;
+            }
+
+            if(!gameState.includes("")) { isGameActive = false; triggerRoundTransition("Remis"); }
+            else { currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateStatusText(); }
+        }
+
+        function triggerRoundTransition(res) {
+            currentRoundNumber++;
+            document.getElementById('next-round-title').textContent = `Runda ${currentRoundNumber}`;
+            document.getElementById('next-round-sub').innerHTML = res === "Remis" ? `Ostatnio: <strong style="color:#f59e0b;">Remis</strong>` : `Ostatnio wygrał: <strong>${res}</strong>`;
+            document.getElementById('next-round-screen').style.display = 'flex';
+
+            setTimeout(() => {
+                gameState = ["", "", "", "", "", "", "", "", ""];
+                cells.forEach(c => { c.textContent = ""; c.className = "cell"; });
+                currentPlayer = 'X'; updateStatusText();
+                document.getElementById('next-round-screen').style.display = 'none';
+                isGameActive = true;
+            }, 1800);
+        }
+
+        function handleFinalGameVictory(winner) {
+            // Dodaj punkt rankingowy zalogowanemu profilowi, tylko jeśli wygrał pod swoim zarejestrowanym nickiem
+            if(currentUserKey && winner.name.toLowerCase() === usersDB[currentUserKey].username.toLowerCase()) {
+                usersDB[currentUserKey].wins++;
+                saveData();
+            }
+
+            const th = themeSelect.value;
+            const popSym = document.getElementById('popup-symbol');
+            popSym.textContent = th === 'aggressive' ? '😈🔥' : th === 'competition' ? '👑🏆' : '🐱🎉';
+
+            document.getElementById('popup-text').innerHTML = `MISTRZ TURNIEJU:<br>${winner.name}! 🏆`;
+            document.getElementById('popup-subtext').innerHTML = `Rozegrano pełną serię rund. Wynik ostateczny to <strong>${player1.score} : ${player2.score}</strong>.`;
+            document.getElementById('win-overlay').style.display = 'flex';
+            startConfetti();
+        }
+
+        function updateLeaderboardUI() {
+            const tbody = document.getElementById('leaderboard-tbody'); tbody.innerHTML = '';
+            const sorted = Object.keys(usersDB).map(k => usersDB[k]).sort((a,b) => b.wins - a.wins);
+            if(sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="no-records">Brak zarejestrowanych kont.</td></tr>'; return; }
+
+            sorted.forEach((p, i) => {
+                let place = i + 1; if(i===0) place='🥇'; if(i===1) place='🥈'; if(i===2) place='🥉';
+                const r = document.createElement('tr');
+                r.innerHTML = `<td style="font-weight:bold;">${place}</td><td style="text-align:left; padding-left:20px;">${p.avatar} ${p.username} <span style="font-size:0.75rem; color:#64748b;">#${p.id}</span></td><td style="font-weight:bold; color:#16a34a;">${p.wins}</td>`;
+                tbody.appendChild(r);
+            });
+        }
+
+        function startConfetti() {
+            confettiInterval = setInterval(() => {
+                const c = document.createElement('div'); c.classList.add('confetti');
+                c.style.left = Math.random() * 100 + 'vw';
+                const currentTheme = themeSelect.value;
+                let colors = ['#ef4444', '#22c55e', '#3b82f6', '#f59e0b', '#ec4899'];
+                if (currentTheme === 'aggressive') colors = ['#ef4444', '#991b1b', '#000000'];
+                if (currentTheme === 'competition') colors = ['#f59e0b', '#8b5cf6', '#ffffff'];
+                c.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+                c.style.transform = `scale(${Math.random()*0.6+0.6})`; c.style.animationDuration = Math.random()*2+2+'s';
+                document.body.appendChild(c); setTimeout(() => c.remove(), 4000);
+            }, 70);
+        }
+
+        function backToMenu() {
+            clearInterval(confettiInterval); document.querySelectorAll('.confetti').forEach(e => e.remove());
+            document.getElementById('win-overlay').style.display = 'none';
+            gameScreen.style.display = 'none';
+            
+            if (isMultiplayerOnline) {
+                netConnection.send({ type: 'rematch' });
+            }
+            executeRematchReset();
+        }
+
+        function executeRematchReset() {
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            cells.forEach(c => { c.textContent = ""; c.className = "cell"; });
+            isGameActive = true;
+            refreshUserSession();
+            
+            // Usunięcie dopisanego kodu pokoju z paska URL przeglądarki przy powrocie
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.pushState({path:cleanUrl}, '', cleanUrl);
+        }
+
+        themeSelect.addEventListener('change', (e) => {
+            const val = e.target.value; bodyEl.className = `theme-${val}`; const icons = themeCharacters[val];
+            document.getElementById('char1').textContent = icons[0]; document.getElementById('char2').textContent = icons[1];
+            document.getElementById('char3').textContent = icons[2]; document.getElementById('char4').textContent = icons[3];
+        });
+
+        cells.forEach(c => c.addEventListener('click', handleCellClick));
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if(isMultiplayerOnline && netConnection) { netConnection.close(); }
+            backToMenu();
+        });
+        document.getElementById('popup-close-btn').addEventListener('click', backToMenu);
+
+        refreshUserSession();
+    </script>
+</body>
+</html>
