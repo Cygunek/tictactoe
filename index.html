@@ -442,8 +442,11 @@
                 
                 // Zapis konta do bazy PostgreSQL
                 const { error } = await _supabase.from('users').insert([{ username: username.toLowerCase(), password: password, id: uniqueID, avatar: '🐱', wins: 0 }]);
-                if(error) { showAuthError("Błąd zapisu SQL."); return; }
-
+               if(error) { 
+    console.error("Szczegóły błędu:", error); 
+    showAuthError("Błąd zapisu: " + (error.message || "Sprawdź polityki RLS!")); 
+    return; 
+}
                 loggedUser = { username: username.toLowerCase(), id: uniqueID, avatar: '🐱', wins: 0 };
                 isRegisterMode = false;
                 authUserIn.value = ""; authPassIn.value = "";
