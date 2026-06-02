@@ -68,39 +68,17 @@
 
         h1 { font-size: 2.5rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; text-align: center; z-index: 5; padding: 0 10px; }
 
-        /* --- RESPONSYWNY UKŁAD --- */
-        .app-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            max-width: 1000px;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-        }
+        /* --- UKŁAD --- */
+        .app-layout { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1000px; align-items: center; justify-content: center; z-index: 5; }
 
-        /* --- PANEL BOCZNY PROFILU --- */
-        .profile-sidebar { 
-            width: 100%; 
-            max-width: 450px; 
-            padding: 15px; 
-            border-radius: 15px; 
-            display: none; 
-            flex-direction: column; 
-            align-items: center; 
-            text-align: center; 
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1); 
-            border: 2px solid rgba(30, 58, 138, 0.1); 
-        }
+        .profile-sidebar { width: 100%; max-width: 450px; padding: 15px; border-radius: 15px; display: none; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border: 2px solid rgba(30, 58, 138, 0.1); }
         .sidebar-avatar { font-size: 3rem; background: #e2e8f0; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 10px; border: 3px solid #1e3a8a; }
         .sidebar-info h3 { font-size: 1.2rem; color: #1e3a8a; margin-bottom: 2px; }
-        .sidebar-info .player-id { font-size: 0.8rem; color: #64748b; font-weight: bold; margin-bottom: 10px; }
+        .sidebar-info .player-id { font-size: 0.85rem; color: #64748b; font-weight: bold; margin-bottom: 10px; }
         .sidebar-stats { background: rgba(255,255,255,0.6); padding: 8px; width: 100%; border-radius: 8px; margin-bottom: 15px; border: 1px solid #cbd5e1; }
         .sidebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
         .sidebar-actions button:last-child { grid-column: span 2; }
 
-        /* --- CENTRUM INTERFEJSU --- */
         .main-box { padding: 20px; border-radius: 15px; width: 100%; max-width: 450px; display: none; }
         .auth-container { display: block; margin: 0 auto; }
 
@@ -122,7 +100,6 @@
         .radio-group input { display: none; }
         .error-text { color: #ef4444; font-weight: bold; margin-bottom: 12px; display: none; text-align: center; font-size: 0.9rem; }
 
-        /* Pokój online kontener */
         .online-panel { background: rgba(59, 130, 246, 0.1); border: 2px solid #3b82f6; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
         .share-link-box { background: white; color: #000; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; font-size: 0.8rem; margin-top: 6px; word-break: break-all; cursor: pointer; font-weight: bold; }
         .connected-players-info { margin: 10px 0; padding: 8px; background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 6px; font-size: 0.85rem; font-weight: bold; color: #16a34a; }
@@ -147,22 +124,9 @@
             border-radius: 12px; 
             overflow: hidden; 
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); 
-            width: 100%;
-            height: 100%;
-            touch-action: manipulation;
+            width: 100%; height: 100%; touch-action: manipulation;
         }
-        .cell { 
-            background-color: #ffffff; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: calc(2rem + 3vw); 
-            max-font-size: 3.5rem;
-            font-weight: bold; 
-            cursor: pointer; 
-            user-select: none; 
-            color: #000; 
-        }
+        .cell { background-color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: calc(2rem + 3vw); max-font-size: 3.5rem; font-weight: bold; cursor: pointer; user-select: none; color: #000; }
         .cell.X { color: #ef4444; } .cell.O { color: #22c55e; }
 
         .next-round-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); color: white; border-radius: 12px; flex-direction: column; justify-content: center; align-items: center; z-index: 15; font-size: 2rem; font-weight: bold; }
@@ -186,8 +150,7 @@
         @keyframes confettiFall { 0% { transform: translateY(-30px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
 
         @media (min-width: 768px) {
-            body { padding-top: 40px; }
-            h1 { font-size: 3.2rem; margin-bottom: 30px; }
+            body { padding-top: 40px; } h1 { font-size: 3.2rem; margin-bottom: 30px; }
             .app-layout { flex-direction: row; align-items: flex-start; }
             .profile-sidebar { width: 280px; padding: 20px; }
             .sidebar-avatar { width: 85px; height: 85px; font-size: 4rem; }
@@ -196,11 +159,7 @@
             .sidebar-actions button:last-child { grid-column: auto; }
             .main-box { width: 480px; padding: 25px; }
             th, td { padding: 8px 12px; font-size: 0.95rem; }
-            .cell { font-size: 3.5rem; }
-            .scoreboard { font-size: 1.1rem; }
-            .score-box span { font-size: 1.8rem; }
-            #status { font-size: 1.3rem; }
-            .bg-character { font-size: 3.5rem; }
+            .cell { font-size: 3.5rem; } .scoreboard { font-size: 1.1rem; } .score-box span { font-size: 1.8rem; } #status { font-size: 1.3rem; } .bg-character { font-size: 3.5rem; }
         }
     </style>
 </head>
@@ -338,7 +297,7 @@
                 
                 <button class="btn-primary" id="start-game-btn">Rozpocznij Mecz</button>
                 <p id="guest-waiting-msg" style="display:none; text-align:center; font-weight:bold; color:#2563eb; margin-top:10px; font-style:italic;">
-                    ⏳ Oczekiwanie, aż Host rozpocznie mecz...
+                    ⏳ Połączono! Oczekiwanie, aż Host rozpocznie mecz...
                 </p>
 
                 <div style="margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 15px; overflow-x: auto;">
@@ -409,8 +368,8 @@
         <div class="popup">
             <h3>🤝 Panel Znajomych</h3><br>
             <div class="input-group">
-                <label for="friend-search-input">Dodaj znajomego (Nick lub numer ID):</label>
-                <input type="text" id="friend-search-input" placeholder="Nick lub ID gracza">
+                <label for="friend-search-input">Dodaj znajomego (Wpisz wyłącznie 4-cyfrowy numer ID):</label>
+                <input type="text" id="friend-search-input" placeholder="np. 5162">
             </div>
             <div id="friend-error" style="color:#ef4444; font-weight:bold; font-size:0.85rem; margin-bottom:5px; display:none;">Komunikat</div>
             <button class="btn-primary" style="padding:8px; font-size:0.95rem;" id="btn-add-friend-submit">Dodaj znajomego</button>
@@ -424,8 +383,12 @@
     <footer>© Copyright 2026 All Rights Reserved | Wsparcie: <a href="mailto:pomoc@kolokrzyzyk.pl">pomoc@kolokrzyzyk.pl</a></footer>
 
     <script>
+        // Synchronizacja bazy oraz unikalnych sesji kart
         let usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
-        let currentUserKey = sessionStorage.getItem('loggedUserKey_v2') || null; 
+        
+        // ZMIANA: Każde okno generuje unikalny token pomocniczy sesji, zapobiegając konfliktom logowania
+        if(!window.name) { window.name = "KIK_WINDOW_" + Math.random(); }
+        let currentUserKey = sessionStorage.getItem('loggedUserKey_v2_' + window.name) || null; 
 
         const authScreen = document.getElementById('auth-screen');
         const setupScreen = document.getElementById('setup-screen');
@@ -469,39 +432,46 @@
             authError.style.display = 'none';
         });
 
+        function generateUniquePlayerID() {
+            let tentativeID;
+            let isUnique = false;
+            while (!isUnique) {
+                tentativeID = Math.floor(1000 + Math.random() * 9000).toString();
+                isUnique = true;
+                for (let k in usersDB) {
+                    if (usersDB[k].id === tentativeID) { isUnique = false; break; }
+                }
+            }
+            return tentativeID;
+        }
+
         btnAuthSubmit.addEventListener('click', () => {
+            // Aktualizacja bazy danych na wypadek zmian w innych kartach
+            usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
+            
             const username = authUserIn.value.trim();
             const password = authPassIn.value.trim();
             if(!username || !password) { showAuthError("Uzupełnij pola!"); return; }
 
             if(isRegisterMode) {
-                // NOWOŚĆ: Blokada powtarzających się nicków
-                if(usersDB[username.toLowerCase()]) { 
-                    showAuthError("Ta nazwa użytkownika jest już zajęta!"); 
-                    return; 
-                }
-                const randomID = Math.floor(1000 + Math.random() * 9000).toString();
+                if(usersDB[username.toLowerCase()]) { showAuthError("Ta nazwa użytkownika jest już zajęta!"); return; }
                 
-                // Zapis danych do bazy danych
-                usersDB[username.toLowerCase()] = { username: username, password: password, id: randomID, avatar: "🐱", wins: 0, friends: [] };
+                const uniqueID = generateUniquePlayerID();
+                usersDB[username.toLowerCase()] = { username: username, password: password, id: uniqueID, avatar: "🐱", wins: 0, friends: [] };
                 saveData(); 
                 
-                // NOWOŚĆ: Automatyczne logowanie od razu po stworzeniu konta
                 currentUserKey = username.toLowerCase();
-                sessionStorage.setItem('loggedUserKey_v2', currentUserKey);
+                sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
                 
-                // Wyczyszczenie formularza i wejście do gry
                 isRegisterMode = false;
-                authUserIn.value = "";
-                authPassIn.value = "";
-                
+                authUserIn.value = ""; authPassIn.value = "";
                 refreshUserSession();
                 checkUrlParametersForRoom();
             } else {
                 const user = usersDB[username.toLowerCase()];
                 if(user && user.password === password) {
                     currentUserKey = username.toLowerCase();
-                    sessionStorage.setItem('loggedUserKey_v2', currentUserKey);
+                    sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
                     refreshUserSession();
                     checkUrlParametersForRoom();
                 } else { showAuthError("Błędne dane logowania!"); }
@@ -514,6 +484,7 @@
         function saveData() { localStorage.setItem('usersDB_v2', JSON.stringify(usersDB)); }
 
         function refreshUserSession() {
+            usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
             if(!currentUserKey) {
                 authScreen.style.display = 'block'; setupScreen.style.display = 'none'; gameScreen.style.display = 'none'; sidebarPanel.style.display = 'none';
                 return;
@@ -531,7 +502,7 @@
         }
 
         document.getElementById('btn-side-logout').addEventListener('click', () => {
-            sessionStorage.removeItem('loggedUserKey_v2'); currentUserKey = null;
+            sessionStorage.removeItem('loggedUserKey_v2_' + window.name); currentUserKey = null;
             if(peer) peer.destroy(); refreshUserSession();
         });
 
@@ -553,27 +524,17 @@
 
         document.getElementById('btn-profile-save').addEventListener('click', () => {
             const updatedName = document.getElementById('edit-input-name').value.trim(); if(!updatedName) return;
-            
-            // Sprawdzenie unikalności przy zmianie nicku w edycji profilu
             if (updatedName.toLowerCase() !== currentUserKey && usersDB[updatedName.toLowerCase()]) {
-                alert("Ta nazwa użytkownika jest zajęta przez innego gracza!");
-                return;
+                alert("Ta nazwa użytkownika jest zajęta przez innego gracza!"); return;
             }
-
             const user = usersDB[currentUserKey];
-            
-            // Re-indeksacja klucza w bazie danych jeśli nick się zmienił
             if (updatedName.toLowerCase() !== currentUserKey) {
-                user.username = updatedName;
-                user.avatar = profileAvatarTemp;
+                user.username = updatedName; user.avatar = profileAvatarTemp;
                 usersDB[updatedName.toLowerCase()] = user;
                 delete usersDB[currentUserKey];
                 currentUserKey = updatedName.toLowerCase();
-                sessionStorage.setItem('loggedUserKey_v2', currentUserKey);
-            } else {
-                user.avatar = profileAvatarTemp;
-            }
-            
+                sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
+            } else { user.avatar = profileAvatarTemp; }
             saveData(); document.getElementById('edit-profile-overlay').style.display = 'none'; refreshUserSession();
         });
 
@@ -583,20 +544,24 @@
         });
 
         document.getElementById('btn-add-friend-submit').addEventListener('click', () => {
-            const query = document.getElementById('friend-search-input').value.trim().toLowerCase();
-            const labelErr = document.getElementById('friend-error'); if(!query) return;
-            const myAccount = usersDB[currentUserKey]; let foundKey = null;
-
-            for (let key in usersDB) {
-                if (key === query || `#${usersDB[key].id}` === query || usersDB[key].id === query) {
-                    if (key !== currentUserKey) { foundKey = key; break; }
-                }
+            const queryId = document.getElementById('friend-search-input').value.trim().replace('#', '');
+            const labelErr = document.getElementById('friend-error'); if(!queryId) return;
+            const myAccount = usersDB[currentUserKey]; 
+            
+            if(queryId === myAccount.id) {
+                labelErr.textContent = "Nie możesz dodać samego siebie!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; return;
             }
+
+            let foundKey = null;
+            for (let key in usersDB) {
+                if (usersDB[key].id === queryId) { foundKey = key; break; }
+            }
+
             if(foundKey && !myAccount.friends.includes(foundKey)) {
                 myAccount.friends.push(foundKey); saveData(); renderFriends();
-                labelErr.style.display = 'block'; labelErr.textContent = "Dodano znajomego!"; labelErr.style.color = "#16a34a";
-            } else if (foundKey) { labelErr.textContent = "Jest już na liście."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
-            else { labelErr.textContent = "Nie znaleziono gracza."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
+                labelErr.style.display = 'block'; labelErr.textContent = `Dodano gracza ${usersDB[foundKey].username}!`; labelErr.style.color = "#16a34a";
+            } else if (foundKey) { labelErr.textContent = "Ten gracz jest już na Twojej liście."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
+            else { labelErr.textContent = "Nie znaleziono gracza o podanym numerze ID!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
         });
 
         function renderFriends() {
@@ -606,7 +571,7 @@
             myAccount.friends.forEach(fKey => {
                 const fData = usersDB[fKey]; if(!fData) return;
                 const div = document.createElement('div'); div.className = 'friend-item';
-                div.innerHTML = `<span>${fData.avatar} <strong>${fData.username}</strong></span> <button onclick="quickInviteOnline('${fData.id}')" style="padding:4px 8px; background:#3b82f6; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">Zaproś</button>`;
+                div.innerHTML = `<span>${fData.avatar} <strong>${fData.username}</strong> <small style="color:#64748b;">#${fData.id}</small></span> <button onclick="quickInviteOnline('${fData.id}')" style="padding:4px 8px; background:#3b82f6; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">Zaproś</button>`;
                 container.appendChild(div);
             });
         }
@@ -625,30 +590,21 @@
             const maxRoundsCont = document.getElementById('max-rounds-container');
 
             if (gameModeSelect.value === "online") {
-                isMultiplayerOnline = true; 
-                onlineSetupBox.style.display = "block";
+                isMultiplayerOnline = true; onlineSetupBox.style.display = "block";
                 document.getElementById('p2-box-container').style.display = "none";
-                
-                startBtn.style.display = "block";
-                guestMsg.style.display = "none";
-                maxRoundsCont.style.display = "block"; 
-                
+                startBtn.style.display = "block"; guestMsg.style.display = "none"; maxRoundsCont.style.display = "block"; 
                 initPeerNetwork();
             } else {
-                isMultiplayerOnline = false; 
-                onlineSetupBox.style.display = "none";
+                isMultiplayerOnline = false; onlineSetupBox.style.display = "none";
                 document.getElementById('p2-box-container').style.display = "block";
-                startBtn.style.display = "block";
-                guestMsg.style.display = "none";
-                maxRoundsCont.style.display = "block"; 
+                startBtn.style.display = "block"; guestMsg.style.display = "none"; maxRoundsCont.style.display = "block"; 
                 document.getElementById('connected-players-box').style.display = "none";
                 if (peer) { peer.destroy(); peer = null; }
             }
         }
 
         document.getElementById('room-link-display').addEventListener('click', function() {
-            navigator.clipboard.writeText(this.textContent);
-            alert("Link skopiowany! Wyślij go znajomemu.");
+            navigator.clipboard.writeText(this.textContent); alert("Link skopiowany!");
         });
 
         function initPeerNetwork() {
@@ -669,7 +625,7 @@
                 document.getElementById('room-link-display').textContent = inviteUrl;
                 
                 document.getElementById('connected-players-box').style.display = "block";
-                document.getElementById('connected-players-list').textContent = `${usersDB[currentUserKey].username} (Host), Oczekiwanie na gracza 2...`;
+                document.getElementById('connected-players-list').textContent = `${usersDB[currentUserKey].username} (Host), Oczekiwanie na połączenie...`;
             });
 
             peer.on('connection', (conn) => { netConnection = conn; setupNetworkListeners(); });
@@ -685,11 +641,7 @@
             if (peer) { peer.destroy(); peer = null; }
             document.getElementById('online-status-lbl').textContent = "Łączenie z pokojem...";
             peer = new Peer();
-            peer.on('open', () => { 
-                amIRoomHost = false; 
-                netConnection = peer.connect(targetId); 
-                setupNetworkListeners(); 
-            });
+            peer.on('open', () => { amIRoomHost = false; netConnection = peer.connect(targetId); setupNetworkListeners(); });
             peer.on('error', () => { alert("Błąd dołączania. Pokój nie istnieje."); handleGameModeChange(); });
         }
 
@@ -716,7 +668,6 @@
                     guestMsg.style.display = "block";
                     maxRoundsCont.style.display = "none"; 
                 }
-
                 netConnection.send({ type: 'init-names', name: usersDB[currentUserKey].username });
             });
 
@@ -731,13 +682,9 @@
                     } else {
                         document.getElementById('connected-players-list').innerHTML = `1. ${player2.name} (Host) | <span style="color:#2563eb;">2. ${player1.name} (Ty)</span>`;
                     }
-
-                    if (amIRoomHost) {
-                        myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
-                        netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: parseInt(document.getElementById('max-rounds').value), p1Name: player1.name, p2Name: player2.name });
-                    }
                 }
-                if (data.type === 'confirm-signs') {
+                
+                if (data.type === 'launch-match-broadcast') {
                     maxWinningRounds = data.rounds;
                     player1.name = data.p1Name;
                     player2.name = data.p2Name;
@@ -759,12 +706,25 @@
         document.getElementById('start-game-btn').addEventListener('click', () => {
             if (isMultiplayerOnline) {
                 if (!netConnection) { alert("Brak gracza w pokoju! Poczekaj na połączenie znajomego."); return; }
+                
                 player1.name = usersDB[currentUserKey].username;
                 myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
                 maxWinningRounds = parseInt(document.getElementById('max-rounds').value);
-                netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: maxWinningRounds, p1Name: player1.name, p2Name: player2.name });
+                
+                netConnection.send({ 
+                    type: 'launch-match-broadcast', 
+                    hostSign: myOnlineSign, 
+                    rounds: maxWinningRounds, 
+                    p1Name: player1.name, 
+                    p2Name: player2.name 
+                });
+                
+                player1.sign = myOnlineSign;
+                player2.sign = myOnlineSign === 'X' ? 'O' : 'X';
+                launchGameEngine();
                 return;
             }
+            
             player1.name = usersDB[currentUserKey].username;
             player2.name = document.getElementById('p2-name').value.trim() || "Gracz 2";
             player1.sign = document.querySelector('input[name="p1-sign"]:checked').value;
@@ -813,9 +773,9 @@
 
         function checkResult() {
             let roundWon = false;
-            for(let condition of winningConditions) {
-                if(gameState[condition[0]]==='' || gameState[condition[1]]==='' || gameState[condition[2]]==='') continue;
-                if(gameState[condition[0]] === gameState[condition[1]] && gameState[condition[1]] === gameState[condition[2]]) { roundWon = true; break; }
+            for(let i=0; i<winningConditions.length; i++) {
+                const cond = winningConditions[i];
+                if(gameState[cond[0]] !== "" && gameState[cond[0]] === gameState[cond[1]] && gameState[cond[1]] === gameState[cond[2]]) { roundWon = true; break; }
             }
 
             if(roundWon) {
@@ -845,6 +805,7 @@
         }
 
         function handleFinalGameVictory(winner) {
+            usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
             if(currentUserKey && winner.name.toLowerCase() === usersDB[currentUserKey].username.toLowerCase()) {
                 usersDB[currentUserKey].wins++; saveData();
             }
@@ -862,7 +823,7 @@
             sorted.forEach((p, i) => {
                 let place = i + 1; if(i===0) place='🥇'; if(i===1) place='🥈'; if(i===2) place='🥉';
                 const r = document.createElement('tr');
-                r.innerHTML = `<td style="font-weight:bold;">${place}</td><td>${p.avatar} ${p.username}</td><td style="font-weight:bold; color:#16a34a;">${p.wins}</td>`;
+                r.innerHTML = `<td style="font-weight:bold;">${place}</td><td>${p.avatar} ${p.username} <span style="color:#64748b; font-size:0.8rem;">#${p.id}</span></td><td style="font-weight:bold; color:#16a34a;">${p.wins}</td>`;
                 tbody.appendChild(r);
             });
         }
@@ -886,13 +847,8 @@
             gameState = ["", "", "", "", "", "", "", "", ""];
             cells.forEach(c => { c.textContent = ""; c.className = "cell"; });
             isGameActive = true; 
-            
-            if(isMultiplayerOnline) {
-                document.getElementById('join-existing-room-area').style.display = "block";
-            }
-            
-            refreshUserSession();
-            handleGameModeChange();
+            if(isMultiplayerOnline) { document.getElementById('join-existing-room-area').style.display = "block"; }
+            refreshUserSession(); handleGameModeChange();
             const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.pushState({path:cleanUrl}, '', cleanUrl);
         }
