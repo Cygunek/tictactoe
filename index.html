@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kółko i Krzyżyk - Edycja Mobilna & Online</title>
+    <!-- Biblioteka PeerJS do komunikacji P2P Online -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * {
@@ -12,7 +13,7 @@
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: background 0.5s ease, color 0.3s ease;
-            -webkit-tap-highlight-color: transparent; /* Usuwa niebieskie podświetlenie kliknięcia na Android/iOS */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -67,10 +68,10 @@
 
         h1 { font-size: 2.5rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; text-align: center; z-index: 5; padding: 0 10px; }
 
-        /* --- RESPONSYWNY UKŁAD (FLEXBOX) --- */
+        /* --- RESPONSYWNY UKŁAD --- */
         .app-layout {
             display: flex;
-            flex-direction: column; /* Domyślnie w pionie dla telefonów */
+            flex-direction: column;
             gap: 20px;
             width: 100%;
             max-width: 1000px;
@@ -97,13 +98,12 @@
         .sidebar-info .player-id { font-size: 0.8rem; color: #64748b; font-weight: bold; margin-bottom: 10px; }
         .sidebar-stats { background: rgba(255,255,255,0.6); padding: 8px; width: 100%; border-radius: 8px; margin-bottom: 15px; border: 1px solid #cbd5e1; }
         .sidebar-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
-        .sidebar-actions button:last-child { grid-column: span 2; } /* Przycisk wyloguj na całą szerokość */
+        .sidebar-actions button:last-child { grid-column: span 2; }
 
         /* --- CENTRUM INTERFEJSU --- */
         .main-box { padding: 20px; border-radius: 15px; width: 100%; max-width: 450px; display: none; }
         .auth-container { display: block; margin: 0 auto; }
 
-        /* Formularze i elementy interfejsu */
         .input-group { margin-bottom: 12px; text-align: left; }
         .input-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.9rem; color: #4b5563; }
         .input-group input, .input-group select { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; background: white; color: #000; }
@@ -125,11 +125,12 @@
         /* Pokój online kontener */
         .online-panel { background: rgba(59, 130, 246, 0.1); border: 2px solid #3b82f6; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
         .share-link-box { background: white; color: #000; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; font-size: 0.8rem; margin-top: 6px; word-break: break-all; cursor: pointer; font-weight: bold; }
+        .connected-players-info { margin: 10px 0; padding: 8px; background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 6px; font-size: 0.85rem; font-weight: bold; color: #16a34a; }
 
         table { width: 100%; border-collapse: collapse; background: white; color: #000; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; margin-top: 8px; }
         th, td { padding: 6px 8px; text-align: center; font-size: 0.85rem; border-bottom: 1px solid #cbd5e1; }
 
-        /* --- EKALSTYCZNA PLANSZA GRY --- */
+        /* --- PLANSZA GRY --- */
         .game-container { flex-direction: column; align-items: center; width: 100%; }
         .scoreboard { display: flex; gap: 20px; padding: 8px 15px; background: white; border-radius: 15px; margin-bottom: 12px; font-size: 1rem; font-weight: bold; color: #333; width: 100%; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .score-box span { display: block; font-size: 1.5rem; margin-top: 2px; }
@@ -148,14 +149,14 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); 
             width: 100%;
             height: 100%;
-            touch-action: manipulation; /* Optymalizacja pod ekrany dotykowe */
+            touch-action: manipulation;
         }
         .cell { 
             background-color: #ffffff; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: calc(2rem + 3vw); /* Dynamiczna wielkość znaków X i O na telefonach */
+            font-size: calc(2rem + 3vw); 
             max-font-size: 3.5rem;
             font-weight: bold; 
             cursor: pointer; 
@@ -184,11 +185,10 @@
         .confetti { position: absolute; width: 8px; height: 8px; z-index: 99; pointer-events: none; animation: confettiFall 4s linear infinite; }
         @keyframes confettiFall { 0% { transform: translateY(-30px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
 
-        /* === DEDYKOWANE MEDIA QUERIES DLA TABLETÓW I KOMPUTERÓW (EKRANY ≥ 768px) === */
         @media (min-width: 768px) {
             body { padding-top: 40px; }
             h1 { font-size: 3.2rem; margin-bottom: 30px; }
-            .app-layout { flex-direction: row; align-items: flex-start; } /* Ustawienie obok siebie na dużych ekranach */
+            .app-layout { flex-direction: row; align-items: flex-start; }
             .profile-sidebar { width: 280px; padding: 20px; }
             .sidebar-avatar { width: 85px; height: 85px; font-size: 4rem; }
             .sidebar-info h3 { font-size: 1.3rem; }
@@ -215,6 +215,7 @@
 
     <div class="app-layout">
         
+        <!-- === PANEL BOCZNY PROFILU === -->
         <div class="profile-sidebar" id="sidebar-panel">
             <div class="sidebar-avatar" id="side-avatar-icon">🐱</div>
             <div class="sidebar-info">
@@ -231,14 +232,16 @@
             </div>
         </div>
 
+        <!-- === CENTRUM INTERFEJSÓW === -->
         <div>
+            <!-- 1. LOGOWANIE / REJESTRACJA -->
             <div class="main-box auth-container" id="auth-screen">
                 <h2 id="auth-title" style="text-align:center; color:#1e3a8a; margin-bottom:15px;">Logowanie</h2>
                 <div class="error-text" id="auth-error">Błędne dane!</div>
                 
                 <div class="input-group">
                     <label for="auth-username">Nazwa Użytkownika:</label>
-                    <input type="text" id="auth-username" placeholder="Wpisz swój nick">
+                    <input text" id="auth-username" placeholder="Wpisz swój nick">
                 </div>
                 <div class="input-group">
                     <label for="auth-password">Hasło:</label>
@@ -249,6 +252,7 @@
                 <center><button class="btn-link" id="btn-auth-toggle">Nie masz konta? Zarejestruj się</button></center>
             </div>
 
+            <!-- 2. KONFIGURACJA ROZGRYWKI -->
             <div class="main-box" id="setup-screen">
                 <h2 style="margin-bottom:15px; text-align:center;">Ustawienia Meczu</h2>
                 
@@ -269,16 +273,23 @@
                     </select>
                 </div>
 
+                <!-- PANEL ONLINE -->
                 <div id="online-setup-box" style="display:none;" class="online-panel">
                     <h4 style="color:#2563eb; margin-bottom:10px;">🛡️ Pokój Gry Online</h4>
                     <p id="online-status-lbl" style="font-size:0.85rem; font-weight:bold; color:#d97706; margin-bottom:8px;">Inicjalizacja sieci...</p>
+                    
+                    <!-- NOWOŚĆ: Belka informująca o połączonych graczach przed startem rundy -->
+                    <div id="connected-players-box" class="connected-players-info" style="display:none;">
+                        Gracze w pokoju: <span id="connected-players-list">...</span>
+                    </div>
+
                     <div id="online-room-details" style="display:none;">
                         <p style="font-size:0.85rem;">Kod pokoju dla znajomego:</p>
                         <h3 id="room-id-display" style="letter-spacing:2px; color:#1e3a8a; margin:4px 0;">XXXXX</h3>
                         <p style="font-size:0.8rem; color:#4b5563;">Kliknij link poniżej, aby go skopiować:</p>
                         <div class="share-link-box" id="room-link-display">Wczytywanie linku...</div>
                     </div>
-                    <div style="margin-top:10px; border-top:1px solid #3b82f6; padding-top:10px;">
+                    <div style="margin-top:10px; border-top:1px solid #3b82f6; padding-top:10px;" id="join-existing-room-area">
                         <label style="font-weight:bold; font-size:0.8rem; display:block; text-align:left; margin-bottom:4px;">Dołącz do kodu pokoju znajomego:</label>
                         <input type="text" id="join-room-input" placeholder="Wpisz kod pokoju" style="padding:8px; border-radius:5px; border:1px solid #cbd5e1; width:65%; text-transform:uppercase; font-size:0.9rem;">
                         <button id="btn-join-room-submit" style="padding:8px 12px; background:#22c55e; border:none; color:white; border-radius:5px; font-weight:bold; cursor:pointer; font-size:0.9rem;">Dołącz</button>
@@ -311,7 +322,8 @@
                     </div>
                 </div>
 
-                <div class="input-group" style="margin-bottom: 15px;">
+                <!-- POLE WYBORU RUND (UKRYWANE DLA GOŚCIA W TRYBIE ONLINE) -->
+                <div class="input-group" style="margin-bottom: 15px;" id="max-rounds-container">
                     <label for="max-rounds">Graj do określonej liczby wygranych rund:</label>
                     <select id="max-rounds">
                         <option value="1">1 wygrana runda</option>
@@ -325,7 +337,12 @@
                 </div>
                 
                 <div class="error-text" id="error-msg">Gracze nie mogą mieć tego samego znaku!</div>
+                
+                <!-- PRZYCISK START / STATUS SYSTEMOWY -->
                 <button class="btn-primary" id="start-game-btn">Rozpocznij Mecz</button>
+                <p id="guest-waiting-msg" style="display:none; text-align:center; font-weight:bold; color:#2563eb; margin-top:10px; font-style:italic;">
+                    ⏳ Oczekiwanie, aż Host rozpocznie mecz...
+                </p>
 
                 <div style="margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 15px; overflow-x: auto;">
                     <h3>🏆 Sala Sław (Zarejestrowani)</h3>
@@ -338,6 +355,7 @@
                 </div>
             </div>
 
+            <!-- 3. PLANSZA MATRYCY GRY -->
             <div class="main-box game-container" id="game-screen">
                 <div class="scoreboard">
                     <div class="score-box"><div id="score-p1-name">Gracz 1</div><span id="score-p1-val" class="player-x">0</span></div>
@@ -361,6 +379,7 @@
 
     </div>
 
+    <!-- POP-UPY MODALNE -->
     <div class="overlay" id="win-overlay">
         <div class="popup">
             <div class="animated-winner-sign" id="popup-symbol">🏆</div>
@@ -565,27 +584,45 @@
         }
 
         gameModeSelect.addEventListener('change', handleGameModeChange);
+        
         function handleGameModeChange() {
+            const startBtn = document.getElementById('start-game-btn');
+            const guestMsg = document.getElementById('guest-waiting-msg');
+            const maxRoundsCont = document.getElementById('max-rounds-container');
+
             if (gameModeSelect.value === "online") {
-                isMultiplayerOnline = true; onlineSetupBox.style.display = "block";
+                isMultiplayerOnline = true; 
+                onlineSetupBox.style.display = "block";
                 document.getElementById('p2-box-container').style.display = "none";
+                
+                // Domyślny stan przy wejściu w tryb online
+                startBtn.style.display = "block";
+                guestMsg.style.display = "none";
+                maxRoundsCont.style.display = "block"; 
+                
                 initPeerNetwork();
             } else {
-                isMultiplayerOnline = false; onlineSetupBox.style.display = "none";
+                isMultiplayerOnline = false; 
+                onlineSetupBox.style.display = "none";
                 document.getElementById('p2-box-container').style.display = "block";
+                startBtn.style.display = "block";
+                guestMsg.style.display = "none";
+                maxRoundsCont.style.display = "block"; 
+                document.getElementById('connected-players-box').style.display = "none";
                 if (peer) { peer.destroy(); peer = null; }
             }
         }
 
         document.getElementById('room-link-display').addEventListener('click', function() {
             navigator.clipboard.writeText(this.textContent);
-            alert("Link skopiowany! Wyślij go znajomemu na telefon lub komputer.");
+            alert("Link skopiowany! Wyślij go znajomemu.");
         });
 
         function initPeerNetwork() {
             if (peer) return;
             document.getElementById('online-status-lbl').textContent = "Łączenie z siecią multiplayer...";
             document.getElementById('online-room-details').style.display = "none";
+            document.getElementById('connected-players-box').style.display = "none";
 
             const roomId = "KIK" + Math.floor(1000 + Math.random() * 9000);
             peer = new Peer(roomId);
@@ -597,6 +634,10 @@
                 document.getElementById('room-id-display').textContent = id;
                 const inviteUrl = window.location.origin + window.location.pathname + "?room=" + id;
                 document.getElementById('room-link-display').textContent = inviteUrl;
+                
+                // Aktualizacja listy graczy u Hosta na start
+                document.getElementById('connected-players-box').style.display = "block";
+                document.getElementById('connected-players-list').textContent = `${usersDB[currentUserKey].username} (Host), Oczekiwanie na gracza 2...`;
             });
 
             peer.on('connection', (conn) => { netConnection = conn; setupNetworkListeners(); });
@@ -612,7 +653,11 @@
             if (peer) { peer.destroy(); peer = null; }
             document.getElementById('online-status-lbl').textContent = "Łączenie z pokojem...";
             peer = new Peer();
-            peer.on('open', () => { amIRoomHost = false; netConnection = peer.connect(targetId); setupNetworkListeners(); });
+            peer.on('open', () => { 
+                amIRoomHost = false; 
+                netConnection = peer.connect(targetId); 
+                setupNetworkListeners(); 
+            });
             peer.on('error', () => { alert("Błąd dołączania. Pokój nie istnieje."); handleGameModeChange(); });
         }
 
@@ -626,8 +671,21 @@
         }
 
         function setupNetworkListeners() {
+            const startBtn = document.getElementById('start-game-btn');
+            const guestMsg = document.getElementById('guest-waiting-msg');
+            const maxRoundsCont = document.getElementById('max-rounds-container');
+
             netConnection.on('open', () => {
-                document.getElementById('online-status-lbl').innerHTML = "🟢 Połączono! Gotowi do starcia.";
+                document.getElementById('online-status-lbl').innerHTML = "🟢 Połączono z pokoju sieciowego!";
+                document.getElementById('join-existing-room-area').style.display = "none";
+                
+                // Jeśli jesteś GOŚCIEM, ukryj przycisk i selektor rund zgodnie z wytycznymi
+                if (!amIRoomHost) {
+                    startBtn.style.display = "none";
+                    guestMsg.style.display = "block";
+                    maxRoundsCont.style.display = "none"; // UKRYCIE SELEKTORA RUND U GOŚCIA
+                }
+
                 netConnection.send({ type: 'init-names', name: usersDB[currentUserKey].username });
             });
 
@@ -635,13 +693,24 @@
                 if (data.type === 'init-names') {
                     player1.name = amIRoomHost ? usersDB[currentUserKey].username : data.name;
                     player2.name = amIRoomHost ? data.name : usersDB[currentUserKey].username;
+                    
+                    // POKAZANIE NAZW OBU GRACZY W INTERFEJSIE POKOJU
+                    document.getElementById('connected-players-box').style.display = "block";
+                    if(amIRoomHost) {
+                        document.getElementById('connected-players-list').innerHTML = `1. ${player1.name} (Host) | <span style="color:#2563eb;">2. ${player2.name} (Połączony)</span>`;
+                    } else {
+                        document.getElementById('connected-players-list').innerHTML = `1. ${player2.name} (Host) | <span style="color:#2563eb;">2. ${player1.name} (Ty)</span>`;
+                    }
+
                     if (amIRoomHost) {
                         myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
-                        netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: parseInt(document.getElementById('max-rounds').value) });
+                        netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: parseInt(document.getElementById('max-rounds').value), p1Name: player1.name, p2Name: player2.name });
                     }
                 }
                 if (data.type === 'confirm-signs') {
                     maxWinningRounds = data.rounds;
+                    player1.name = data.p1Name;
+                    player2.name = data.p2Name;
                     if (!amIRoomHost) {
                         myOnlineSign = data.hostSign === 'X' ? 'O' : 'X';
                         player1.sign = myOnlineSign; player2.sign = data.hostSign;
@@ -659,12 +728,11 @@
 
         document.getElementById('start-game-btn').addEventListener('click', () => {
             if (isMultiplayerOnline) {
-                if (!netConnection) { alert("Brak gracza w pokoju!"); return; }
-                if (!amIRoomHost) { alert("Tylko host może uruchomić mecz!"); return; }
+                if (!netConnection) { alert("Brak gracza w pokoju! Poczekaj na połączenie znajomego."); return; }
                 player1.name = usersDB[currentUserKey].username;
                 myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
                 maxWinningRounds = parseInt(document.getElementById('max-rounds').value);
-                netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: maxWinningRounds });
+                netConnection.send({ type: 'confirm-signs', hostSign: myOnlineSign, rounds: maxWinningRounds, p1Name: player1.name, p2Name: player2.name });
                 return;
             }
             player1.name = usersDB[currentUserKey].username;
@@ -780,14 +848,22 @@
         function backToMenu() {
             clearInterval(confettiInterval); document.querySelectorAll('.confetti').forEach(e => e.remove());
             document.getElementById('win-overlay').style.display = 'none'; gameScreen.style.display = 'none';
-            if (isMultiplayerOnline) netConnection.send({ type: 'rematch' });
+            if (isMultiplayerOnline && netConnection) netConnection.send({ type: 'rematch' });
             executeRematchReset();
         }
 
         function executeRematchReset() {
             gameState = ["", "", "", "", "", "", "", "", ""];
             cells.forEach(c => { c.textContent = ""; c.className = "cell"; });
-            isGameActive = true; refreshUserSession();
+            isGameActive = true; 
+            
+            // Przywrócenie widoku formularza dołączania po wyjściu z aktywnego meczu
+            if(isMultiplayerOnline) {
+                document.getElementById('join-existing-room-area').style.display = "block";
+            }
+            
+            refreshUserSession();
+            handleGameModeChange();
             const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.pushState({path:cleanUrl}, '', cleanUrl);
         }
