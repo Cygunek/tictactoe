@@ -241,7 +241,7 @@
                 
                 <div class="input-group">
                     <label for="auth-username">Nazwa Użytkownika:</label>
-                    <input text" id="auth-username" placeholder="Wpisz swój nick">
+                    <input type="text" id="auth-username" placeholder="Wpisz swój nick">
                 </div>
                 <div class="input-group">
                     <label for="auth-password">Hasło:</label>
@@ -278,7 +278,6 @@
                     <h4 style="color:#2563eb; margin-bottom:10px;">🛡️ Pokój Gry Online</h4>
                     <p id="online-status-lbl" style="font-size:0.85rem; font-weight:bold; color:#d97706; margin-bottom:8px;">Inicjalizacja sieci...</p>
                     
-                    <!-- NOWOŚĆ: Belka informująca o połączonych graczach przed startem rundy -->
                     <div id="connected-players-box" class="connected-players-info" style="display:none;">
                         Gracze w pokoju: <span id="connected-players-list">...</span>
                     </div>
@@ -322,7 +321,6 @@
                     </div>
                 </div>
 
-                <!-- POLE WYBORU RUND (UKRYWANE DLA GOŚCIA W TRYBIE ONLINE) -->
                 <div class="input-group" style="margin-bottom: 15px;" id="max-rounds-container">
                     <label for="max-rounds">Graj do określonej liczby wygranych rund:</label>
                     <select id="max-rounds">
@@ -338,7 +336,6 @@
                 
                 <div class="error-text" id="error-msg">Gracze nie mogą mieć tego samego znaku!</div>
                 
-                <!-- PRZYCISK START / STATUS SYSTEMOWY -->
                 <button class="btn-primary" id="start-game-btn">Rozpocznij Mecz</button>
                 <p id="guest-waiting-msg" style="display:none; text-align:center; font-weight:bold; color:#2563eb; margin-top:10px; font-style:italic;">
                     ⏳ Oczekiwanie, aż Host rozpocznie mecz...
@@ -478,11 +475,28 @@
             if(!username || !password) { showAuthError("Uzupełnij pola!"); return; }
 
             if(isRegisterMode) {
-                if(usersDB[username.toLowerCase()]) { showAuthError("Ten login jest zajęty!"); return; }
+                // NOWOŚĆ: Blokada powtarzających się nicków
+                if(usersDB[username.toLowerCase()]) { 
+                    showAuthError("Ta nazwa użytkownika jest już zajęta!"); 
+                    return; 
+                }
                 const randomID = Math.floor(1000 + Math.random() * 9000).toString();
+                
+                // Zapis danych do bazy danych
                 usersDB[username.toLowerCase()] = { username: username, password: password, id: randomID, avatar: "🐱", wins: 0, friends: [] };
-                saveData(); isRegisterMode = false; btnAuthToggle.click();
-                showAuthError("Konto założone! Zaloguj się.", "#16a34a");
+                saveData(); 
+                
+                // NOWOŚĆ: Automatyczne logowanie od razu po stworzeniu konta
+                currentUserKey = username.toLowerCase();
+                sessionStorage.setItem('loggedUserKey_v2', currentUserKey);
+                
+                // Wyczyszczenie formularza i wejście do gry
+                isRegisterMode = false;
+                authUserIn.value = "";
+                authPassIn.value = "";
+                
+                refreshUserSession();
+                checkUrlParametersForRoom();
             } else {
                 const user = usersDB[username.toLowerCase()];
                 if(user && user.password === password) {
@@ -539,7 +553,27 @@
 
         document.getElementById('btn-profile-save').addEventListener('click', () => {
             const updatedName = document.getElementById('edit-input-name').value.trim(); if(!updatedName) return;
-            const user = usersDB[currentUserKey]; user.username = updatedName; user.avatar = profileAvatarTemp;
+            
+            // Sprawdzenie unikalności przy zmianie nicku w edycji profilu
+            if (updatedName.toLowerCase() !== currentUserKey && usersDB[updatedName.toLowerCase()]) {
+                alert("Ta nazwa użytkownika jest zajęta przez innego gracza!");
+                return;
+            }
+
+            const user = usersDB[currentUserKey];
+            
+            // Re-indeksacja klucza w bazie danych jeśli nick się zmienił
+            if (updatedName.toLowerCase() !== currentUserKey) {
+                user.username = updatedName;
+                user.avatar = profileAvatarTemp;
+                usersDB[updatedName.toLowerCase()] = user;
+                delete usersDB[currentUserKey];
+                currentUserKey = updatedName.toLowerCase();
+                sessionStorage.setItem('loggedUserKey_v2', currentUserKey);
+            } else {
+                user.avatar = profileAvatarTemp;
+            }
+            
             saveData(); document.getElementById('edit-profile-overlay').style.display = 'none'; refreshUserSession();
         });
 
@@ -595,7 +629,6 @@
                 onlineSetupBox.style.display = "block";
                 document.getElementById('p2-box-container').style.display = "none";
                 
-                // Domyślny stan przy wejściu w tryb online
                 startBtn.style.display = "block";
                 guestMsg.style.display = "none";
                 maxRoundsCont.style.display = "block"; 
@@ -635,7 +668,6 @@
                 const inviteUrl = window.location.origin + window.location.pathname + "?room=" + id;
                 document.getElementById('room-link-display').textContent = inviteUrl;
                 
-                // Aktualizacja listy graczy u Hosta na start
                 document.getElementById('connected-players-box').style.display = "block";
                 document.getElementById('connected-players-list').textContent = `${usersDB[currentUserKey].username} (Host), Oczekiwanie na gracza 2...`;
             });
@@ -679,11 +711,10 @@
                 document.getElementById('online-status-lbl').innerHTML = "🟢 Połączono z pokoju sieciowego!";
                 document.getElementById('join-existing-room-area').style.display = "none";
                 
-                // Jeśli jesteś GOŚCIEM, ukryj przycisk i selektor rund zgodnie z wytycznymi
                 if (!amIRoomHost) {
                     startBtn.style.display = "none";
                     guestMsg.style.display = "block";
-                    maxRoundsCont.style.display = "none"; // UKRYCIE SELEKTORA RUND U GOŚCIA
+                    maxRoundsCont.style.display = "none"; 
                 }
 
                 netConnection.send({ type: 'init-names', name: usersDB[currentUserKey].username });
@@ -694,7 +725,6 @@
                     player1.name = amIRoomHost ? usersDB[currentUserKey].username : data.name;
                     player2.name = amIRoomHost ? data.name : usersDB[currentUserKey].username;
                     
-                    // POKAZANIE NAZW OBU GRACZY W INTERFEJSIE POKOJU
                     document.getElementById('connected-players-box').style.display = "block";
                     if(amIRoomHost) {
                         document.getElementById('connected-players-list').innerHTML = `1. ${player1.name} (Host) | <span style="color:#2563eb;">2. ${player2.name} (Połączony)</span>`;
@@ -857,7 +887,6 @@
             cells.forEach(c => { c.textContent = ""; c.className = "cell"; });
             isGameActive = true; 
             
-            // Przywrócenie widoku formularza dołączania po wyjściu z aktywnego meczu
             if(isMultiplayerOnline) {
                 document.getElementById('join-existing-room-area').style.display = "block";
             }
