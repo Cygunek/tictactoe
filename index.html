@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kółko i Krzyżyk - Edycja Mobilna & Online</title>
+    <title>Kółko i Krzyżyk - Wersja SQL Cloud</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -27,7 +28,6 @@
             overflow-x: hidden;
         }
 
-        /* --- MOTYWY GRADIENTOWE --- */
         body.theme-friendly { background: linear-gradient(-45deg, #e3f2fd, #bbdefb, #e0f2f1, #e8eaf6); animation: gradientAnim 12s ease infinite; }
         body.theme-friendly h1 { color: #1e3a8a; }
         body.theme-friendly .main-box, body.theme-friendly .profile-sidebar { background: rgba(255, 255, 255, 0.95); box-shadow: 0 10px 30px rgba(30, 58, 138, 0.15); }
@@ -59,7 +59,6 @@
 
         @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* --- DEKORACJE TŁA --- */
         .bg-character { position: absolute; font-size: 2.5rem; user-select: none; pointer-events: none; z-index: 1; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.15)); animation: floatAnimation 6s ease-in-out infinite alternate; }
         .char1 { top: 5%; left: 3%; animation-duration: 5s; } .char2 { top: 85%; left: 4%; animation-duration: 7s; animation-delay: 1s; }
         .char3 { top: 6%; right: 3%; animation-duration: 6s; animation-delay: 0.5s; } .char4 { top: 80%; right: 4%; animation-duration: 8s; animation-delay: 1.5s; }
@@ -67,7 +66,6 @@
 
         h1 { font-size: 2.5rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; text-align: center; z-index: 5; padding: 0 10px; }
 
-        /* --- UKŁAD --- */
         .app-layout { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 1000px; align-items: center; justify-content: center; z-index: 5; }
 
         .profile-sidebar { width: 100%; max-width: 450px; padding: 15px; border-radius: 15px; display: none; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border: 2px solid rgba(30, 58, 138, 0.1); }
@@ -295,7 +293,7 @@
                 </p>
 
                 <div style="margin-top: 20px; border-top: 2px dashed #cbd5e1; padding-top: 15px; overflow-x: auto;">
-                    <h3>🏆 Sala Sław (Zarejestrowani)</h3>
+                    <h3>🏆 Sala Sław (Zarejestrowani w SQL Cloud)</h3>
                     <table id="leaderboard-table">
                         <thead>
                             <tr><th style="width: 20%;">Top</th><th>Gracz</th><th style="width: 30%;">Turnieje</th></tr>
@@ -376,8 +374,15 @@
     <footer>© Copyright 2026 All Rights Reserved | Wsparcie: <a href="mailto:pomoc@kolokrzyzyk.pl">pomoc@kolokrzyzyk.pl</a></footer>
 
     <script>
-        if(!window.name) { window.name = "KIK_WIN_" + Math.floor(Math.random() * 100000); }
-        let currentUserKey = sessionStorage.getItem('loggedUserKey_v2_' + window.name) || null; 
+        // ==========================================
+        //  ⚠️ TUTAJ KONIECZNIE WKLEJ SWOJE DANE SQL SUPABASE:
+        // ==========================================
+        const SUPABASE_URL = "lmetjyrsbumovtflgwzn";
+        const SUPABASE_ANON_KEY = "lmetjyrsbumovtflgwzn";
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let loggedUser = null; 
 
         const authScreen = document.getElementById('auth-screen');
         const setupScreen = document.getElementById('setup-screen');
@@ -421,55 +426,37 @@
             authError.style.display = 'none';
         });
 
-        function getFreshDB() {
-            return JSON.parse(localStorage.getItem('usersDB_v2')) || {};
-        }
-
-        function saveFreshDB(db) {
-            localStorage.setItem('usersDB_v2', JSON.stringify(db));
-        }
-
-        function generateUniquePlayerID(db) {
-            let tentativeID;
-            let isUnique = false;
-            while (!isUnique) {
-                tentativeID = Math.floor(1000 + Math.random() * 9000).toString();
-                isUnique = true;
-                for (let k in db) {
-                    if (db[k].id === tentativeID) { isUnique = false; break; }
-                }
-            }
-            return tentativeID;
-        }
-
-        btnAuthSubmit.addEventListener('click', () => {
-            let db = getFreshDB();
+        // CENTRALNE LOGOWANIE I REJESTRACJA SQL CLOUD
+        btnAuthSubmit.addEventListener('click', async () => {
             const username = authUserIn.value.trim();
             const password = authPassIn.value.trim();
             if(!username || !password) { showAuthError("Uzupełnij pola!"); return; }
 
             if(isRegisterMode) {
-                if(db[username.toLowerCase()]) { showAuthError("Ta nazwa użytkownika jest już zajęta!"); return; }
+                // Sprawdzenie w bazie danych SQL czy nick zajęty
+                const { data: existingUser } = await _supabase.from('users').select('username').eq('username', username.toLowerCase()).maybeSingle();
+                if(existingUser) { showAuthError("Ta nazwa użytkownika jest już zajęta!"); return; }
                 
-                const uniqueID = generateUniquePlayerID(db);
-                db[username.toLowerCase()] = { username: username, password: password, id: uniqueID, avatar: "🐱", wins: 0, friends: [] };
-                saveFreshDB(db);
+                // Generowanie unikalnego ID w chmurze SQL
+                let uniqueID = Math.floor(1000 + Math.random() * 9000).toString();
                 
-                currentUserKey = username.toLowerCase();
-                sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
-                
+                // Zapis konta do bazy PostgreSQL
+                const { error } = await _supabase.from('users').insert([{ username: username.toLowerCase(), password: password, id: uniqueID, avatar: '🐱', wins: 0 }]);
+                if(error) { showAuthError("Błąd zapisu SQL."); return; }
+
+                loggedUser = { username: username.toLowerCase(), id: uniqueID, avatar: '🐱', wins: 0 };
                 isRegisterMode = false;
                 authUserIn.value = ""; authPassIn.value = "";
                 refreshUserSession();
                 checkUrlParametersForRoom();
             } else {
-                const user = db[username.toLowerCase()];
+                // Odczyt z bazy danych SQL
+                const { data: user, error } = await _supabase.from('users').select('*').eq('username', username.toLowerCase()).maybeSingle();
                 if(user && user.password === password) {
-                    currentUserKey = username.toLowerCase();
-                    sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
+                    loggedUser = user;
                     refreshUserSession();
                     checkUrlParametersForRoom();
-                } else { showAuthError("Błędne dane logowania!"); }
+                } else { showAuthError("Błędne dane logowania w bazie SQL!"); }
             }
         });
 
@@ -477,114 +464,73 @@
             authError.textContent = msg; authError.style.color = color; authError.style.display = 'block';
         }
 
-        function refreshUserSession() {
-            let db = getFreshDB();
-            if(!currentUserKey || !db[currentUserKey]) {
+        async function refreshUserSession() {
+            if(!loggedUser) {
                 authScreen.style.display = 'block'; setupScreen.style.display = 'none'; gameScreen.style.display = 'none'; sidebarPanel.style.display = 'none';
                 return;
             }
             authScreen.style.display = 'none'; setupScreen.style.display = 'block'; sidebarPanel.style.display = 'flex';
 
-            const user = db[currentUserKey];
-            document.getElementById('p1-name').value = user.username;
-            document.getElementById('side-avatar-icon').textContent = user.avatar;
-            document.getElementById('side-username').textContent = user.username;
-            document.getElementById('side-id-val').textContent = `#${user.id}`;
-            document.getElementById('side-wins-val').textContent = user.wins;
-            document.getElementById('my-id-reminder-label').textContent = `Twoje ID dla kolegi: #${user.id}`;
+            // Odśwież dane gracza prosto z bazy SQL
+            const { data: user } = await _supabase.from('users').select('*').eq('username', loggedUser.username).single();
+            if(user) loggedUser = user;
+
+            document.getElementById('p1-name').value = loggedUser.username.toUpperCase();
+            document.getElementById('side-avatar-icon').textContent = loggedUser.avatar;
+            document.getElementById('side-username').textContent = loggedUser.username;
+            document.getElementById('side-id-val').textContent = `#${loggedUser.id}`;
+            document.getElementById('side-wins-val').textContent = loggedUser.wins;
+            document.getElementById('my-id-reminder-label').textContent = `Twoje ID dla kolegi: #${loggedUser.id}`;
 
             updateLeaderboardUI();
         }
 
         document.getElementById('btn-side-logout').addEventListener('click', () => {
-            sessionStorage.removeItem('loggedUserKey_v2_' + window.name); currentUserKey = null;
-            if(peer) peer.destroy(); refreshUserSession();
+            loggedUser = null; if(peer) peer.destroy(); refreshUserSession();
         });
 
-        let profileAvatarTemp = "🐱";
-        document.getElementById('btn-side-edit').addEventListener('click', () => {
-            let db = getFreshDB(); const user = db[currentUserKey]; document.getElementById('edit-input-name').value = user.username;
-            profileAvatarTemp = user.avatar;
-            document.querySelectorAll('.avatar-opt').forEach(opt => { opt.classList.toggle('selected', opt.getAttribute('data-av') === profileAvatarTemp); });
-            document.getElementById('edit-profile-overlay').style.display = 'flex';
-        });
-
-        document.querySelectorAll('.avatar-opt').forEach(opt => {
-            opt.addEventListener('click', () => {
-                profileAvatarTemp = opt.getAttribute('data-av');
-                document.querySelectorAll('.avatar-opt').forEach(o => o.classList.remove('selected'));
-                opt.classList.add('selected');
-            });
-        });
-
-        document.getElementById('btn-profile-save').addEventListener('click', () => {
-            let db = getFreshDB();
-            const updatedName = document.getElementById('edit-input-name').value.trim(); if(!updatedName) return;
-            if (updatedName.toLowerCase() !== currentUserKey && db[updatedName.toLowerCase()]) {
-                alert("Ta nazwa użytkownika jest zajęta przez innego gracza!"); return;
-            }
-            const user = db[currentUserKey];
-            if (updatedName.toLowerCase() !== currentUserKey) {
-                user.username = updatedName; user.avatar = profileAvatarTemp;
-                db[updatedName.toLowerCase()] = user;
-                delete db[currentUserKey];
-                currentUserKey = updatedName.toLowerCase();
-                sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
-            } else { user.avatar = profileAvatarTemp; }
-            saveFreshDB(db);
-            document.getElementById('edit-profile-overlay').style.display = 'none'; refreshUserSession();
-        });
-
-        document.getElementById('btn-side-friends').addEventListener('click', () => {
-            renderFriends(); document.getElementById('friend-error').style.display = 'none'; document.getElementById('friend-search-input').value = '';
-            document.getElementById('friends-overlay').style.display = 'flex';
-        });
-
-        document.getElementById('btn-add-friend-submit').addEventListener('click', () => {
-            let db = getFreshDB();
-            const queryId = document.getElementById('friend-search-input').value.trim().replace('#', '');
+        // DODAWANIE ZNAJOMYCH PRZEZ ZAPYTANIA SQL (DZIAŁA MIĘDZY PRZEGLĄDARKAMI)
+        document.getElementById('btn-add-friend-submit').addEventListener('click', async () => {
+            const queryId = document.getElementById('friend-search-input').value.trim();
             const labelErr = document.getElementById('friend-error'); if(!queryId) return;
-            const myAccount = db[currentUserKey]; 
             
-            if(queryId === myAccount.id) {
+            if(queryId === loggedUser.id) {
                 labelErr.textContent = "Nie możesz dodać samego siebie!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; return;
             }
 
-            let foundKey = null;
-            for (let key in db) {
-                if (db[key].id === queryId) { foundKey = key; break; }
-            }
+            // Znajdź gracza o tym ID w chmurze SQL
+            const { data: targetUser } = await _supabase.from('users').select('username').eq('id', queryId).maybeSingle();
 
-            if(foundKey) {
-                if (!myAccount.friends.includes(foundKey)) {
-                    myAccount.friends.push(foundKey);
-                    saveFreshDB(db);
+            if(targetUser) {
+                // Sprawdź czy już nie są znajomymi
+                const { data: exists } = await _supabase.from('friends').select('*').eq('user_username', loggedUser.username).eq('friend_username', targetUser.username).maybeSingle();
+                if(!exists) {
+                    await _supabase.from('friends').insert([{ user_username: loggedUser.username, friend_username: targetUser.username }]);
+                    labelErr.style.display = 'block'; labelErr.textContent = `Dodano gracza do bazy znajomych!`; labelErr.style.color = "#16a34a";
                     renderFriends();
-                    labelErr.style.display = 'block'; labelErr.textContent = `Dodano gracza ${db[foundKey].username}!`; labelErr.style.color = "#16a34a";
-                    
-                    // WYSYŁANIE AKTUALIZACJI DO KOLEGI PRZEZ SIEĆ (JEŚLI SĄ POŁĄCZENI)
-                    if(netConnection) {
-                        netConnection.send({ type: 'database-sync', remoteDB: db });
-                    }
                 } else {
-                    labelErr.textContent = "Ten gracz jest już na Twojej liście."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block';
+                    labelErr.textContent = "Ten gracz jest już na liście."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block';
                 }
             } else { 
-                labelErr.textContent = "Nie znaleziono gracza o podanym numerze ID!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; 
+                labelErr.textContent = "Nie znaleziono takiego ID w bazie SQL!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; 
             }
         });
 
-        function renderFriends() {
-            let db = getFreshDB();
+        async function renderFriends() {
             const container = document.getElementById('friends-list-container'); container.innerHTML = '';
-            const myAccount = db[currentUserKey];
-            if(!myAccount.friends || myAccount.friends.length === 0) { container.innerHTML = '<p style="font-style:italic; color:#64748b; font-size:0.85rem;">Brak znajomych.</p>'; return; }
-            myAccount.friends.forEach(fKey => {
-                const fData = db[fKey]; if(!fData) return;
+            
+            // Pobierz znajomych relacją SQL JOIN
+            const { data: friendRows } = await _supabase.from('friends').select('friend_username').eq('user_username', loggedUser.username);
+            
+            if(!friendRows || friendRows.length === 0) { container.innerHTML = '<p style="font-style:italic; color:#64748b; font-size:0.85rem;">Brak znajomych.</p>'; return; }
+            
+            for(let row of friendRows) {
+                const { data: fData } = await _supabase.from('users').select('*').eq('username', row.friend_username).single();
+                if(!fData) continue;
                 const div = document.createElement('div'); div.className = 'friend-item';
                 div.innerHTML = `<span>${fData.avatar} <strong>${fData.username}</strong> <small style="color:#64748b;">#${fData.id}</small></span> <button onclick="quickInviteOnline('${fData.id}')" style="padding:4px 8px; background:#3b82f6; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">Zaproś</button>`;
                 container.appendChild(div);
-            });
+            }
         }
 
         function quickInviteOnline(id) {
@@ -628,7 +574,6 @@
             peer = new Peer(roomId);
 
             peer.on('open', (id) => {
-                let db = getFreshDB();
                 amIRoomHost = true;
                 document.getElementById('online-status-lbl').textContent = "Oczekiwanie na rywala online...";
                 document.getElementById('online-room-details').style.display = "block";
@@ -637,7 +582,7 @@
                 document.getElementById('room-link-display').textContent = inviteUrl;
                 
                 document.getElementById('connected-players-box').style.display = "block";
-                document.getElementById('connected-players-list').textContent = `${db[currentUserKey].username} (Host), Oczekiwanie na połączenie...`;
+                document.getElementById('connected-players-list').textContent = `${loggedUser.username} (Host), Oczekiwanie na połączenie...`;
             });
 
             peer.on('connection', (conn) => { netConnection = conn; setupNetworkListeners(); });
@@ -660,20 +605,19 @@
         function checkUrlParametersForRoom() {
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
-            if (roomParam && currentUserKey) {
+            if (roomParam && loggedUser) {
                 gameModeSelect.value = "online"; handleGameModeChange();
                 setTimeout(() => { connectToRoom(roomParam.toUpperCase()); }, 1000);
             }
         }
 
         function setupNetworkListeners() {
-            let db = getFreshDB();
             const startBtn = document.getElementById('start-game-btn');
             const guestMsg = document.getElementById('guest-waiting-msg');
             const maxRoundsCont = document.getElementById('max-rounds-container');
 
             netConnection.on('open', () => {
-                document.getElementById('online-status-lbl').innerHTML = "🟢 Połączono z pokoju sieciowego!";
+                document.getElementById('online-status-lbl').innerHTML = "🟢 Połączono sieciowo!";
                 document.getElementById('join-existing-room-area').style.display = "none";
                 
                 if (!amIRoomHost) {
@@ -681,30 +625,13 @@
                     guestMsg.style.display = "block";
                     maxRoundsCont.style.display = "none"; 
                 }
-                
-                // KOSTKA SYNCHRONIZACYJNA: Po wejściu do pokoju wysyłamy całą bazę lokalną do drugiego gracza
-                netConnection.send({ type: 'database-sync', remoteDB: db, requestReply: true });
-                netConnection.send({ type: 'init-names', name: db[currentUserKey].username });
+                netConnection.send({ type: 'init-names', name: loggedUser.username });
             });
 
             netConnection.on('data', (data) => {
-                // NOWOŚĆ: Odbieranie i łączenie rozproszonych baz danych graczy przez internet (P2P)
-                if (data.type === 'database-sync') {
-                    let localDB = getFreshDB();
-                    let merged = { ...localDB, ...data.remoteDB }; // Scalenie kont
-                    saveFreshDB(merged);
-                    
-                    if (data.requestReply) {
-                        // Odsyłamy naszą bazę w odpowiedzi, aby host też miał zaktualizowaną listę
-                        netConnection.send({ type: 'database-sync', remoteDB: merged, requestReply: false });
-                    }
-                    refreshUserSession();
-                }
-
                 if (data.type === 'init-names') {
-                    let currentDb = getFreshDB();
-                    player1.name = amIRoomHost ? currentDb[currentUserKey].username : data.name;
-                    player2.name = amIRoomHost ? data.name : currentDb[currentUserKey].username;
+                    player1.name = amIRoomHost ? loggedUser.username : data.name;
+                    player2.name = amIRoomHost ? data.name : loggedUser.username;
                     
                     document.getElementById('connected-players-box').style.display = "block";
                     if(amIRoomHost) {
@@ -734,29 +661,23 @@
         }
 
         document.getElementById('start-game-btn').addEventListener('click', () => {
-            let db = getFreshDB();
             if (isMultiplayerOnline) {
-                if (!netConnection) { alert("Brak gracza w pokoju! Poczekaj na połączenie znajomego."); return; }
+                if (!netConnection) { alert("Brak gracza w pokoju!"); return; }
                 
-                player1.name = db[currentUserKey].username;
+                player1.name = loggedUser.username;
                 myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
                 maxWinningRounds = parseInt(document.getElementById('max-rounds').value);
                 
                 netConnection.send({ 
-                    type: 'launch-match-broadcast', 
-                    hostSign: myOnlineSign, 
-                    rounds: maxWinningRounds, 
-                    p1Name: player1.name, 
-                    p2Name: player2.name 
+                    type: 'launch-match-broadcast', hostSign: myOnlineSign, rounds: maxWinningRounds, p1Name: player1.name, p2Name: player2.name 
                 });
                 
-                player1.sign = myOnlineSign;
-                player2.sign = myOnlineSign === 'X' ? 'O' : 'X';
+                player1.sign = myOnlineSign; player2.sign = myOnlineSign === 'X' ? 'O' : 'X';
                 launchGameEngine();
                 return;
             }
             
-            player1.name = db[currentUserKey].username;
+            player1.name = loggedUser.username;
             player2.name = document.getElementById('p2-name').value.trim() || "Gracz 2";
             player1.sign = document.querySelector('input[name="p1-sign"]:checked').value;
             player2.sign = document.querySelector('input[name="p2-sign"]:checked').value;
@@ -769,8 +690,8 @@
 
         function launchGameEngine() {
             player1.score = 0; player2.score = 0; currentRoundNumber = 1;
-            document.getElementById('score-p1-name').textContent = player1.name;
-            document.getElementById('score-p2-name').textContent = player2.name;
+            document.getElementById('score-p1-name').textContent = player1.name.toUpperCase();
+            document.getElementById('score-p2-name').textContent = player2.name.toUpperCase();
             document.getElementById('score-p1-val').className = player1.sign === 'X' ? 'player-x' : 'player-o';
             document.getElementById('score-p2-val').className = player2.sign === 'X' ? 'player-x' : 'player-o';
             refreshScoreboard();
@@ -786,7 +707,7 @@
             const activePlayerName = player1.sign === currentPlayer ? player1.name : player2.name;
             const styleClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
             let turnAlert = isMultiplayerOnline ? (myOnlineSign === currentPlayer ? " (Twój ruch)" : " (Ruch rywala)") : "";
-            document.getElementById('status').innerHTML = `Tura: <strong>${activePlayerName}</strong> (<span class="${styleClass}">${currentPlayer}</span>)${turnAlert}`;
+            document.getElementById('status').innerHTML = `Tura: <strong>${activePlayerName.toUpperCase()}</strong> (<span class="${styleClass}">${currentPlayer}</span>)${turnAlert}`;
         }
 
         function handleCellClick(e) {
@@ -825,7 +746,7 @@
         function triggerRoundTransition(res) {
             currentRoundNumber++;
             document.getElementById('next-round-title').textContent = `Runda ${currentRoundNumber}`;
-            document.getElementById('next-round-sub').innerHTML = res === "Remis" ? `Ostatnio: <strong style="color:#f59e0b;">Remis</strong>` : `Rundę wygrał: <strong>${res}</strong>`;
+            document.getElementById('next-round-sub').innerHTML = res === "Remis" ? `Ostatnio: <strong style="color:#f59e0b;">Remis</strong>` : `Rundę wygrał: <strong>${res.toUpperCase()}</strong>`;
             document.getElementById('next-round-screen').style.display = 'flex';
             setTimeout(() => {
                 gameState = ["", "", "", "", "", "", "", "", ""];
@@ -835,29 +756,32 @@
             }, 1800);
         }
 
-        function handleFinalGameVictory(winner) {
-            let db = getFreshDB();
-            if(currentUserKey && winner.name.toLowerCase() === db[currentUserKey].username.toLowerCase()) {
-                db[currentUserKey].wins++; 
-                saveFreshDB(db);
+        // ZAPIS WYGRANEJ DO CENTRALNEJ BAZY SQL CLOUD
+        async function handleFinalGameVictory(winner) {
+            if(winner.name.toLowerCase() === loggedUser.username) {
+                // Zwiększamy liczbę wygranych w SQL o 1 przy użyciu komendy RPC/Increment Supabase
+                const { data } = await _supabase.rpc('increment_wins', { row_username: loggedUser.username });
                 
-                // SYNCHRONIZACJA RANKINGU DO PRZECIWNIKA
-                if(netConnection) {
-                    netConnection.send({ type: 'database-sync', remoteDB: db });
+                // Jeśli funkcja rpc nie jest ustawiona, robimy klasyczny bezpieczny update SQL:
+                if(!data) {
+                    await _supabase.from('users').update({ wins: loggedUser.wins + 1 }).eq('username', loggedUser.username);
                 }
             }
             const th = themeSelect.value;
             document.getElementById('popup-symbol').textContent = th === 'aggressive' ? '😈🔥' : th === 'competition' ? '👑🏆' : '🐱🎉';
-            document.getElementById('popup-text').innerHTML = `MISTRZ: ${winner.name}!`;
+            document.getElementById('popup-text').innerHTML = `MISTRZ: ${winner.name.toUpperCase()}!`;
             document.getElementById('popup-subtext').innerHTML = `Seria zakończona wynikiem <strong>${player1.score} : ${player2.score}</strong>.`;
             document.getElementById('win-overlay').style.display = 'flex'; startConfetti();
         }
 
-        function updateLeaderboardUI() {
-            let db = getFreshDB();
+        // AKTUALIZACJA RANKINGU SALI SŁAW Z BAZY SQL
+        async function updateLeaderboardUI() {
             const tbody = document.getElementById('leaderboard-tbody'); tbody.innerHTML = '';
-            const sorted = Object.keys(db).map(k => db[k]).sort((a,b) => b.wins - a.wins);
-            if(sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="no-records">Brak zarejestrowanych graczy.</td></tr>'; return; }
+            
+            // Pobieranie danych z PostgreSQL posortowanych od największej liczby punktów
+            const { data: sorted, error } = await _supabase.from('users').select('*').order('wins', { ascending: false }).limit(10);
+            
+            if(!sorted || sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="no-records">Brak zarejestrowanych graczy w bazie SQL.</td></tr>'; return; }
             sorted.forEach((p, i) => {
                 let place = i + 1; if(i===0) place='🥇'; if(i===1) place='🥈'; if(i===2) place='🥉';
                 const r = document.createElement('tr');
@@ -895,7 +819,8 @@
         document.getElementById('reset-btn').addEventListener('click', () => { if(isMultiplayerOnline && netConnection) netConnection.close(); backToMenu(); });
         document.getElementById('popup-close-btn').addEventListener('click', backToMenu);
 
-        refreshUserSession();
+        // Wywołanie sesji na start
+        authScreen.style.display = 'block';
     </script>
 </body>
 </html>
