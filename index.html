@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kółko i Krzyżyk - Edycja Mobilna & Online</title>
-    <!-- Biblioteka PeerJS do komunikacji P2P Online -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * {
@@ -174,7 +173,6 @@
 
     <div class="app-layout">
         
-        <!-- === PANEL BOCZNY PROFILU === -->
         <div class="profile-sidebar" id="sidebar-panel">
             <div class="sidebar-avatar" id="side-avatar-icon">🐱</div>
             <div class="sidebar-info">
@@ -191,9 +189,7 @@
             </div>
         </div>
 
-        <!-- === CENTRUM INTERFEJSÓW === -->
         <div>
-            <!-- 1. LOGOWANIE / REJESTRACJA -->
             <div class="main-box auth-container" id="auth-screen">
                 <h2 id="auth-title" style="text-align:center; color:#1e3a8a; margin-bottom:15px;">Logowanie</h2>
                 <div class="error-text" id="auth-error">Błędne dane!</div>
@@ -211,7 +207,6 @@
                 <center><button class="btn-link" id="btn-auth-toggle">Nie masz konta? Zarejestruj się</button></center>
             </div>
 
-            <!-- 2. KONFIGURACJA ROZGRYWKI -->
             <div class="main-box" id="setup-screen">
                 <h2 style="margin-bottom:15px; text-align:center;">Ustawienia Meczu</h2>
                 
@@ -232,7 +227,6 @@
                     </select>
                 </div>
 
-                <!-- PANEL ONLINE -->
                 <div id="online-setup-box" style="display:none;" class="online-panel">
                     <h4 style="color:#2563eb; margin-bottom:10px;">🛡️ Pokój Gry Online</h4>
                     <p id="online-status-lbl" style="font-size:0.85rem; font-weight:bold; color:#d97706; margin-bottom:8px;">Inicjalizacja sieci...</p>
@@ -311,7 +305,6 @@
                 </div>
             </div>
 
-            <!-- 3. PLANSZA MATRYCY GRY -->
             <div class="main-box game-container" id="game-screen">
                 <div class="scoreboard">
                     <div class="score-box"><div id="score-p1-name">Gracz 1</div><span id="score-p1-val" class="player-x">0</span></div>
@@ -335,7 +328,6 @@
 
     </div>
 
-    <!-- POP-UPY MODALNE -->
     <div class="overlay" id="win-overlay">
         <div class="popup">
             <div class="animated-winner-sign" id="popup-symbol">🏆</div>
@@ -367,9 +359,10 @@
     <div class="overlay" id="friends-overlay">
         <div class="popup">
             <h3>🤝 Panel Znajomych</h3><br>
+            <p id="my-id-reminder-label" style="font-size:0.85rem; font-weight:bold; color:#1e3a8a; text-align:left; margin-bottom:10px;">Twoje ID: #----</p>
             <div class="input-group">
                 <label for="friend-search-input">Dodaj znajomego (Wpisz wyłącznie 4-cyfrowy numer ID):</label>
-                <input type="text" id="friend-search-input" placeholder="np. 5162">
+                <input type="text" id="friend-search-input" placeholder="np. 1343">
             </div>
             <div id="friend-error" style="color:#ef4444; font-weight:bold; font-size:0.85rem; margin-bottom:5px; display:none;">Komunikat</div>
             <button class="btn-primary" style="padding:8px; font-size:0.95rem;" id="btn-add-friend-submit">Dodaj znajomego</button>
@@ -383,11 +376,7 @@
     <footer>© Copyright 2026 All Rights Reserved | Wsparcie: <a href="mailto:pomoc@kolokrzyzyk.pl">pomoc@kolokrzyzyk.pl</a></footer>
 
     <script>
-        // Synchronizacja bazy oraz unikalnych sesji kart
-        let usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
-        
-        // ZMIANA: Każde okno generuje unikalny token pomocniczy sesji, zapobiegając konfliktom logowania
-        if(!window.name) { window.name = "KIK_WINDOW_" + Math.random(); }
+        if(!window.name) { window.name = "KIK_WIN_" + Math.floor(Math.random() * 100000); }
         let currentUserKey = sessionStorage.getItem('loggedUserKey_v2_' + window.name) || null; 
 
         const authScreen = document.getElementById('auth-screen');
@@ -432,33 +421,39 @@
             authError.style.display = 'none';
         });
 
-        function generateUniquePlayerID() {
+        function getFreshDB() {
+            return JSON.parse(localStorage.getItem('usersDB_v2')) || {};
+        }
+
+        function saveFreshDB(db) {
+            localStorage.setItem('usersDB_v2', JSON.stringify(db));
+        }
+
+        function generateUniquePlayerID(db) {
             let tentativeID;
             let isUnique = false;
             while (!isUnique) {
                 tentativeID = Math.floor(1000 + Math.random() * 9000).toString();
                 isUnique = true;
-                for (let k in usersDB) {
-                    if (usersDB[k].id === tentativeID) { isUnique = false; break; }
+                for (let k in db) {
+                    if (db[k].id === tentativeID) { isUnique = false; break; }
                 }
             }
             return tentativeID;
         }
 
         btnAuthSubmit.addEventListener('click', () => {
-            // Aktualizacja bazy danych na wypadek zmian w innych kartach
-            usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
-            
+            let db = getFreshDB();
             const username = authUserIn.value.trim();
             const password = authPassIn.value.trim();
             if(!username || !password) { showAuthError("Uzupełnij pola!"); return; }
 
             if(isRegisterMode) {
-                if(usersDB[username.toLowerCase()]) { showAuthError("Ta nazwa użytkownika jest już zajęta!"); return; }
+                if(db[username.toLowerCase()]) { showAuthError("Ta nazwa użytkownika jest już zajęta!"); return; }
                 
-                const uniqueID = generateUniquePlayerID();
-                usersDB[username.toLowerCase()] = { username: username, password: password, id: uniqueID, avatar: "🐱", wins: 0, friends: [] };
-                saveData(); 
+                const uniqueID = generateUniquePlayerID(db);
+                db[username.toLowerCase()] = { username: username, password: password, id: uniqueID, avatar: "🐱", wins: 0, friends: [] };
+                saveFreshDB(db);
                 
                 currentUserKey = username.toLowerCase();
                 sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
@@ -468,7 +463,7 @@
                 refreshUserSession();
                 checkUrlParametersForRoom();
             } else {
-                const user = usersDB[username.toLowerCase()];
+                const user = db[username.toLowerCase()];
                 if(user && user.password === password) {
                     currentUserKey = username.toLowerCase();
                     sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
@@ -481,22 +476,22 @@
         function showAuthError(msg, color = "#ef4444") {
             authError.textContent = msg; authError.style.color = color; authError.style.display = 'block';
         }
-        function saveData() { localStorage.setItem('usersDB_v2', JSON.stringify(usersDB)); }
 
         function refreshUserSession() {
-            usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
-            if(!currentUserKey) {
+            let db = getFreshDB();
+            if(!currentUserKey || !db[currentUserKey]) {
                 authScreen.style.display = 'block'; setupScreen.style.display = 'none'; gameScreen.style.display = 'none'; sidebarPanel.style.display = 'none';
                 return;
             }
             authScreen.style.display = 'none'; setupScreen.style.display = 'block'; sidebarPanel.style.display = 'flex';
 
-            const user = usersDB[currentUserKey];
+            const user = db[currentUserKey];
             document.getElementById('p1-name').value = user.username;
             document.getElementById('side-avatar-icon').textContent = user.avatar;
             document.getElementById('side-username').textContent = user.username;
             document.getElementById('side-id-val').textContent = `#${user.id}`;
             document.getElementById('side-wins-val').textContent = user.wins;
+            document.getElementById('my-id-reminder-label').textContent = `Twoje ID dla kolegi: #${user.id}`;
 
             updateLeaderboardUI();
         }
@@ -508,7 +503,7 @@
 
         let profileAvatarTemp = "🐱";
         document.getElementById('btn-side-edit').addEventListener('click', () => {
-            const user = usersDB[currentUserKey]; document.getElementById('edit-input-name').value = user.username;
+            let db = getFreshDB(); const user = db[currentUserKey]; document.getElementById('edit-input-name').value = user.username;
             profileAvatarTemp = user.avatar;
             document.querySelectorAll('.avatar-opt').forEach(opt => { opt.classList.toggle('selected', opt.getAttribute('data-av') === profileAvatarTemp); });
             document.getElementById('edit-profile-overlay').style.display = 'flex';
@@ -523,19 +518,21 @@
         });
 
         document.getElementById('btn-profile-save').addEventListener('click', () => {
+            let db = getFreshDB();
             const updatedName = document.getElementById('edit-input-name').value.trim(); if(!updatedName) return;
-            if (updatedName.toLowerCase() !== currentUserKey && usersDB[updatedName.toLowerCase()]) {
+            if (updatedName.toLowerCase() !== currentUserKey && db[updatedName.toLowerCase()]) {
                 alert("Ta nazwa użytkownika jest zajęta przez innego gracza!"); return;
             }
-            const user = usersDB[currentUserKey];
+            const user = db[currentUserKey];
             if (updatedName.toLowerCase() !== currentUserKey) {
                 user.username = updatedName; user.avatar = profileAvatarTemp;
-                usersDB[updatedName.toLowerCase()] = user;
-                delete usersDB[currentUserKey];
+                db[updatedName.toLowerCase()] = user;
+                delete db[currentUserKey];
                 currentUserKey = updatedName.toLowerCase();
                 sessionStorage.setItem('loggedUserKey_v2_' + window.name, currentUserKey);
             } else { user.avatar = profileAvatarTemp; }
-            saveData(); document.getElementById('edit-profile-overlay').style.display = 'none'; refreshUserSession();
+            saveFreshDB(db);
+            document.getElementById('edit-profile-overlay').style.display = 'none'; refreshUserSession();
         });
 
         document.getElementById('btn-side-friends').addEventListener('click', () => {
@@ -544,32 +541,46 @@
         });
 
         document.getElementById('btn-add-friend-submit').addEventListener('click', () => {
+            let db = getFreshDB();
             const queryId = document.getElementById('friend-search-input').value.trim().replace('#', '');
             const labelErr = document.getElementById('friend-error'); if(!queryId) return;
-            const myAccount = usersDB[currentUserKey]; 
+            const myAccount = db[currentUserKey]; 
             
             if(queryId === myAccount.id) {
                 labelErr.textContent = "Nie możesz dodać samego siebie!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; return;
             }
 
             let foundKey = null;
-            for (let key in usersDB) {
-                if (usersDB[key].id === queryId) { foundKey = key; break; }
+            for (let key in db) {
+                if (db[key].id === queryId) { foundKey = key; break; }
             }
 
-            if(foundKey && !myAccount.friends.includes(foundKey)) {
-                myAccount.friends.push(foundKey); saveData(); renderFriends();
-                labelErr.style.display = 'block'; labelErr.textContent = `Dodano gracza ${usersDB[foundKey].username}!`; labelErr.style.color = "#16a34a";
-            } else if (foundKey) { labelErr.textContent = "Ten gracz jest już na Twojej liście."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
-            else { labelErr.textContent = "Nie znaleziono gracza o podanym numerze ID!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; }
+            if(foundKey) {
+                if (!myAccount.friends.includes(foundKey)) {
+                    myAccount.friends.push(foundKey);
+                    saveFreshDB(db);
+                    renderFriends();
+                    labelErr.style.display = 'block'; labelErr.textContent = `Dodano gracza ${db[foundKey].username}!`; labelErr.style.color = "#16a34a";
+                    
+                    // WYSYŁANIE AKTUALIZACJI DO KOLEGI PRZEZ SIEĆ (JEŚLI SĄ POŁĄCZENI)
+                    if(netConnection) {
+                        netConnection.send({ type: 'database-sync', remoteDB: db });
+                    }
+                } else {
+                    labelErr.textContent = "Ten gracz jest już na Twojej liście."; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block';
+                }
+            } else { 
+                labelErr.textContent = "Nie znaleziono gracza o podanym numerze ID!"; labelErr.style.color = "#ef4444"; labelErr.style.display = 'block'; 
+            }
         });
 
         function renderFriends() {
+            let db = getFreshDB();
             const container = document.getElementById('friends-list-container'); container.innerHTML = '';
-            const myAccount = usersDB[currentUserKey];
+            const myAccount = db[currentUserKey];
             if(!myAccount.friends || myAccount.friends.length === 0) { container.innerHTML = '<p style="font-style:italic; color:#64748b; font-size:0.85rem;">Brak znajomych.</p>'; return; }
             myAccount.friends.forEach(fKey => {
-                const fData = usersDB[fKey]; if(!fData) return;
+                const fData = db[fKey]; if(!fData) return;
                 const div = document.createElement('div'); div.className = 'friend-item';
                 div.innerHTML = `<span>${fData.avatar} <strong>${fData.username}</strong> <small style="color:#64748b;">#${fData.id}</small></span> <button onclick="quickInviteOnline('${fData.id}')" style="padding:4px 8px; background:#3b82f6; border:none; color:white; border-radius:4px; font-weight:bold; cursor:pointer; font-size:0.75rem;">Zaproś</button>`;
                 container.appendChild(div);
@@ -617,6 +628,7 @@
             peer = new Peer(roomId);
 
             peer.on('open', (id) => {
+                let db = getFreshDB();
                 amIRoomHost = true;
                 document.getElementById('online-status-lbl').textContent = "Oczekiwanie na rywala online...";
                 document.getElementById('online-room-details').style.display = "block";
@@ -625,7 +637,7 @@
                 document.getElementById('room-link-display').textContent = inviteUrl;
                 
                 document.getElementById('connected-players-box').style.display = "block";
-                document.getElementById('connected-players-list').textContent = `${usersDB[currentUserKey].username} (Host), Oczekiwanie na połączenie...`;
+                document.getElementById('connected-players-list').textContent = `${db[currentUserKey].username} (Host), Oczekiwanie na połączenie...`;
             });
 
             peer.on('connection', (conn) => { netConnection = conn; setupNetworkListeners(); });
@@ -655,6 +667,7 @@
         }
 
         function setupNetworkListeners() {
+            let db = getFreshDB();
             const startBtn = document.getElementById('start-game-btn');
             const guestMsg = document.getElementById('guest-waiting-msg');
             const maxRoundsCont = document.getElementById('max-rounds-container');
@@ -668,13 +681,30 @@
                     guestMsg.style.display = "block";
                     maxRoundsCont.style.display = "none"; 
                 }
-                netConnection.send({ type: 'init-names', name: usersDB[currentUserKey].username });
+                
+                // KOSTKA SYNCHRONIZACYJNA: Po wejściu do pokoju wysyłamy całą bazę lokalną do drugiego gracza
+                netConnection.send({ type: 'database-sync', remoteDB: db, requestReply: true });
+                netConnection.send({ type: 'init-names', name: db[currentUserKey].username });
             });
 
             netConnection.on('data', (data) => {
+                // NOWOŚĆ: Odbieranie i łączenie rozproszonych baz danych graczy przez internet (P2P)
+                if (data.type === 'database-sync') {
+                    let localDB = getFreshDB();
+                    let merged = { ...localDB, ...data.remoteDB }; // Scalenie kont
+                    saveFreshDB(merged);
+                    
+                    if (data.requestReply) {
+                        // Odsyłamy naszą bazę w odpowiedzi, aby host też miał zaktualizowaną listę
+                        netConnection.send({ type: 'database-sync', remoteDB: merged, requestReply: false });
+                    }
+                    refreshUserSession();
+                }
+
                 if (data.type === 'init-names') {
-                    player1.name = amIRoomHost ? usersDB[currentUserKey].username : data.name;
-                    player2.name = amIRoomHost ? data.name : usersDB[currentUserKey].username;
+                    let currentDb = getFreshDB();
+                    player1.name = amIRoomHost ? currentDb[currentUserKey].username : data.name;
+                    player2.name = amIRoomHost ? data.name : currentDb[currentUserKey].username;
                     
                     document.getElementById('connected-players-box').style.display = "block";
                     if(amIRoomHost) {
@@ -704,10 +734,11 @@
         }
 
         document.getElementById('start-game-btn').addEventListener('click', () => {
+            let db = getFreshDB();
             if (isMultiplayerOnline) {
                 if (!netConnection) { alert("Brak gracza w pokoju! Poczekaj na połączenie znajomego."); return; }
                 
-                player1.name = usersDB[currentUserKey].username;
+                player1.name = db[currentUserKey].username;
                 myOnlineSign = document.querySelector('input[name="p1-sign"]:checked').value;
                 maxWinningRounds = parseInt(document.getElementById('max-rounds').value);
                 
@@ -725,7 +756,7 @@
                 return;
             }
             
-            player1.name = usersDB[currentUserKey].username;
+            player1.name = db[currentUserKey].username;
             player2.name = document.getElementById('p2-name').value.trim() || "Gracz 2";
             player1.sign = document.querySelector('input[name="p1-sign"]:checked').value;
             player2.sign = document.querySelector('input[name="p2-sign"]:checked').value;
@@ -805,9 +836,15 @@
         }
 
         function handleFinalGameVictory(winner) {
-            usersDB = JSON.parse(localStorage.getItem('usersDB_v2')) || {};
-            if(currentUserKey && winner.name.toLowerCase() === usersDB[currentUserKey].username.toLowerCase()) {
-                usersDB[currentUserKey].wins++; saveData();
+            let db = getFreshDB();
+            if(currentUserKey && winner.name.toLowerCase() === db[currentUserKey].username.toLowerCase()) {
+                db[currentUserKey].wins++; 
+                saveFreshDB(db);
+                
+                // SYNCHRONIZACJA RANKINGU DO PRZECIWNIKA
+                if(netConnection) {
+                    netConnection.send({ type: 'database-sync', remoteDB: db });
+                }
             }
             const th = themeSelect.value;
             document.getElementById('popup-symbol').textContent = th === 'aggressive' ? '😈🔥' : th === 'competition' ? '👑🏆' : '🐱🎉';
@@ -817,8 +854,9 @@
         }
 
         function updateLeaderboardUI() {
+            let db = getFreshDB();
             const tbody = document.getElementById('leaderboard-tbody'); tbody.innerHTML = '';
-            const sorted = Object.keys(usersDB).map(k => usersDB[k]).sort((a,b) => b.wins - a.wins);
+            const sorted = Object.keys(db).map(k => db[k]).sort((a,b) => b.wins - a.wins);
             if(sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="no-records">Brak zarejestrowanych graczy.</td></tr>'; return; }
             sorted.forEach((p, i) => {
                 let place = i + 1; if(i===0) place='🥇'; if(i===1) place='🥈'; if(i===2) place='🥉';
