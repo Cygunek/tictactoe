@@ -377,9 +377,14 @@
         // ==========================================
         //  ⚠️ TUTAJ KONIECZNIE WKLEJ SWOJE DANE SQL SUPABASE:
         // ==========================================
-        const SUPABASE_URL = "https://lmetjyrsbumovtflgwzn.supabase.co";
-        const SUPABASE_ANON_KEY = "PvUkh6a571xZm4C0ZodNw2aHxkS9DC5Yexl42TX4pN836KRU6tokJpcfzzKROb4S7BUGZmSibg1tzHrLzwyJeg==";
-        
+       const SUPABASE_URL = "https://lmetjyrsbumovtflgwzn.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+
+const isConfigValid = SUPABASE_URL !== "TUTAJ_WLEJ_SWOJ_URL" && SUPABASE_ANON_KEY !== "TUTAJ_WLEJ_SWOJ_KEY";
+
+if (isConfigValid) {
+    _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let loggedUser = null; 
