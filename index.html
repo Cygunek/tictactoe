@@ -7,7 +7,7 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        * {
+         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -162,29 +162,29 @@
 </head>
 <body class="theme-friendly" id="game-body">
     <script>
+        // 1. ZMIENNE GLOBALNE
         let _supabase = null;
         let loggedUser = null;
-        
-        // --- INICJALIZACJA ---
+        let peer = null, netConnection = null, amIRoomHost = false, myOnlineSign = 'X';
+        let player1 = { name: "Gracz 1", sign: "X", score: 0 };
+        let player2 = { name: "Gracz 2", sign: "O", score: 0 };
+        let currentPlayer = 'X', gameState = ["","","","","","","","",""], isGameActive = true;
+        let currentRoundNumber = 1, maxWinningRounds = 3, confettiInterval;
+        let isMultiplayerOnline = false;
+        let cells; 
+
+        // 2. INICJALIZACJA
         try {
             _supabase = supabase.createClient(
                 "https://lmetjyrsbumovtflgwzn.supabase.co", 
                 "sb_publishable_J0cj28Wn6LnITRboTif2ZQ_u9YPMS5K"
             );
-            console.log("Supabase zainicjalizowane!");
         } catch (e) { console.error("Błąd init:", e); }
 
-        // --- ZMIENNE GRY ---
-        let player1 = { name: "Gracz 1", sign: "X", score: 0 };
-        let player2 = { name: "Gracz 2", sign: "O", score: 0 };
-        let currentPlayer = 'X', gameState = ["","","","","","","","",""], isGameActive = true;
-        let currentRoundNumber = 1, maxWinningRounds = 3, confettiInterval;
-        let isMultiplayerOnline = false, peer = null, netConnection = null, amIRoomHost = false, myOnlineSign = 'X';
-        const cells = document.querySelectorAll('.cell');
-        const winningConditions = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-
-        // --- BEZPIECZNIK PRZYCISKÓW ---
+        // 3. "BEZPIECZNIK" - ładuje przyciski po załadowaniu strony
         document.addEventListener('DOMContentLoaded', () => {
+            cells = document.querySelectorAll('.cell');
+            
             const btnEdit = document.getElementById('btn-side-edit');
             if(btnEdit) btnEdit.addEventListener('click', () => document.getElementById('edit-profile-overlay').style.display = 'flex');
             
@@ -198,10 +198,11 @@
             if(resetBtn) resetBtn.addEventListener('click', () => { if(isMultiplayerOnline && netConnection) netConnection.close(); backToMenu(); });
             
             cells.forEach(c => c.addEventListener('click', handleCellClick));
+            
             refreshUserSession();
         });
 
-        // --- POPRAWIONE FUNKCJE ---
+        // 4. POPRAWIONE FUNKCJE (Tura i Wynik)
         function updateStatusText() {
             const activePlayerName = player1.sign === currentPlayer ? player1.name : player2.name;
             const styleClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
@@ -211,32 +212,23 @@
 
         function checkResult() {
             let roundWon = false;
+            const winningConditions = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
             for(let i=0; i<winningConditions.length; i++) {
-                const cond = winningConditions[i];
-                if(gameState[cond[0]] !== "" && gameState[cond[0]] === gameState[cond[1]] && gameState[cond[1]] === gameState[cond[2]]) { 
-                    roundWon = true; break; 
-                }
+                const [a,b,c] = winningConditions[i];
+                if(gameState[a] !== "" && gameState[a] === gameState[b] && gameState[b] === gameState[c]) { roundWon = true; break; }
             }
-
             if(roundWon) {
                 isGameActive = false;
                 if(player1.sign === currentPlayer) player1.score++; else player2.score++;
                 refreshScoreboard();
-                
                 if (player1.score === maxWinningRounds || player2.score === maxWinningRounds) {
                     const winner = player1.score === maxWinningRounds ? player1 : player2;
                     if (isMultiplayerOnline) {
                         if (amIRoomHost) handleFinalGameVictory(winner);
                         else showVictoryPopupOnly(winner);
-                    } else {
-                        handleFinalGameVictory(winner);
-                    }
-                } else {
-                    triggerRoundTransition(player1.sign === currentPlayer ? player1.name : player2.name);
-                }
-                return;
-            }
-            if(!gameState.includes("")) { isGameActive = false; triggerRoundTransition("Remis"); }
+                    } else { handleFinalGameVictory(winner); }
+                } else { triggerRoundTransition(player1.sign === currentPlayer ? player1.name : player2.name); }
+            } else if(!gameState.includes("")) { isGameActive = false; triggerRoundTransition("Remis"); }
             else { currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateStatusText(); }
         }
 
@@ -248,48 +240,10 @@
         }
 
         function showVictoryPopupOnly(winner) {
-            const th = document.getElementById('theme-select').value;
-            document.getElementById('popup-symbol').textContent = th === 'aggressive' ? '😈🔥' : th === 'competition' ? '👑🏆' : '🐱🎉';
             document.getElementById('popup-text').innerHTML = `MISTRZ: ${winner.name.toUpperCase()}!`;
-            document.getElementById('popup-subtext').innerHTML = `Seria zakończona wynikiem <strong>${player1.score} : ${player2.score}</strong>.`;
             document.getElementById('win-overlay').style.display = 'flex';
             startConfetti();
         }
-
-        const authScreen = document.getElementById('auth-screen');
-        const setupScreen = document.getElementById('setup-screen');
-        const gameScreen = document.getElementById('game-screen');
-        const sidebarPanel = document.getElementById('sidebar-panel');
-        const bodyEl = document.getElementById('game-body');
-        const gameModeSelect = document.getElementById('game-mode-select');
-        const onlineSetupBox = document.getElementById('online-setup-box');
-
-        let isRegisterMode = false;
-        const authTitle = document.getElementById('auth-title');
-        const btnAuthSubmit = document.getElementById('btn-auth-submit');
-        const btnAuthToggle = document.getElementById('btn-auth-toggle');
-        const authError = document.getElementById('auth-error');
-        const authUserIn = document.getElementById('auth-username');
-        const authPassIn = document.getElementById('auth-password');
-
-        let player1 = { name: "Gracz 1", sign: "X", score: 0 };
-        let player2 = { name: "Gracz 2", sign: "O", score: 0 };
-        let currentPlayer = 'X';
-        let gameState = ["", "", "", "", "", "", "", "", ""];
-        let isGameActive = true;
-        let currentRoundNumber = 1;
-        let maxWinningRounds = 3;
-        let confettiInterval;
-
-        let isMultiplayerOnline = false;
-        let peer = null;
-        let netConnection = null;
-        let amIRoomHost = false;
-        let myOnlineSign = 'X';
-
-        const cells = document.querySelectorAll('.cell');
-        const winningConditions = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-
         btnAuthToggle.addEventListener('click', () => {
             isRegisterMode = !isRegisterMode;
             authTitle.textContent = isRegisterMode ? "Rejestracja Konta" : "Logowanie";
@@ -717,6 +671,7 @@
         document.getElementById('reset-btn').addEventListener('click', () => { if(isMultiplayerOnline && netConnection) netConnection.close(); backToMenu(); });
         document.getElementById('popup-close-btn').addEventListener('click', backToMenu);
         authScreen.style.display = 'block';
+        
     </script>
 </body>
 </html>
