@@ -703,19 +703,17 @@
             document.getElementById('score-p2-val').textContent = player2.score;
         }
 
-        function updateStatusText() {
+       function updateStatusText() {
     const activePlayerName = player1.sign === currentPlayer ? player1.name : player2.name;
     const styleClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
     
     let turnAlert = "";
     if (isMultiplayerOnline) {
-        
         turnAlert = (myOnlineSign === currentPlayer) ? " (Twój ruch)" : " (Ruch rywala)";
     }
     
     document.getElementById('status').innerHTML = `Tura: <strong>${activePlayerName.toUpperCase()}</strong> (<span class="${styleClass}">${currentPlayer}</span>)${turnAlert}`;
 }
-
         function handleCellClick(e) {
             const cell = e.target; const idx = parseInt(cell.getAttribute('data-index'));
             if(gameState[idx] !== "" || !isGameActive) return;
