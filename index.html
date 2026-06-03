@@ -380,8 +380,11 @@
         const SUPABASE_URL = "https://lmetjyrsbumovtflgwzn.supabase.co";
         const SUPABASE_ANON_KEY = "PvUkh6a571xZm4C0ZodNw2aHxkS9DC5Yexl42TX4pN836KRU6tokJpcfzzKROb4S7BUGZmSibg1tzHrLzwyJeg==";
         
-        _supabase = supabase.createClient("https://lmetjyrsbumovtflgwzn.supabase.co","sb_publishable_JOcj28Wn6LnITRboTif2ZQ_u9YPMS5K");
-        console.log("Supabase zainicjalizowane pomyślnie.");
+_supabase = supabase.createClient(
+    "https://lmetjyrsbumovtflgwzn.supabase.co", 
+    "sb_publishable_J0cj28Wn6LnITRbOTif2ZQ_u9YPMS5K"
+);
+console.log("Supabase zainicjalizowane!");
     } catch (e) {
         console.error("Błąd inicjalizacji:", e);
     }
@@ -709,11 +712,17 @@
         }
 
         function updateStatusText() {
-            const activePlayerName = player1.sign === currentPlayer ? player1.name : player2.name;
-            const styleClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
-            let turnAlert = isMultiplayerOnline ? (myOnlineSign === currentPlayer ? " (Twój ruch)" : " (Ruch rywala)") : "";
-            document.getElementById('status').innerHTML = `Tura: <strong>${activePlayerName.toUpperCase()}</strong> (<span class="${styleClass}">${currentPlayer}</span>)${turnAlert}`;
-        }
+    const activePlayerName = player1.sign === currentPlayer ? player1.name : player2.name;
+    const styleClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
+    
+    let turnAlert = "";
+    if (isMultiplayerOnline) {
+        
+        turnAlert = (myOnlineSign === currentPlayer) ? " (Twój ruch)" : " (Ruch rywala)";
+    }
+    
+    document.getElementById('status').innerHTML = `Tura: <strong>${activePlayerName.toUpperCase()}</strong> (<span class="${styleClass}">${currentPlayer}</span>)${turnAlert}`;
+}
 
         function handleCellClick(e) {
             const cell = e.target; const idx = parseInt(cell.getAttribute('data-index'));
@@ -729,20 +738,37 @@
         }
 
         function checkResult() {
-            let roundWon = false;
-            for(let i=0; i<winningConditions.length; i++) {
-                const cond = winningConditions[i];
-                if(gameState[cond[0]] !== "" && gameState[cond[0]] === gameState[cond[1]] && gameState[cond[1]] === gameState[cond[2]]) { roundWon = true; break; }
-            }
+           let roundWon = false;
+    for(let i=0; i<winningConditions.length; i++) {
+        const cond = winningConditions[i];
+        if(gameState[cond[0]] !== "" && gameState[cond[0]] === gameState[cond[1]] && gameState[cond[1]] === gameState[cond[2]]) { 
+            roundWon = true; break; 
+        }
+    }
 
-            if(roundWon) {
-                isGameActive = false;
-                if(player1.sign === currentPlayer) player1.score++; else player2.score++;
-                refreshScoreboard();
-                if(player1.score === maxWinningRounds || player2.score === maxWinningRounds) {
-                    handleFinalGameVictory(player1.score === maxWinningRounds ? player1 : player2);
-                } else { triggerRoundTransition(player1.sign === currentPlayer ? player1.name : player2.name); }
-                return;
+    if(roundWon) {
+        isGameActive = false;
+        if(player1.sign === currentPlayer) player1.score++; else player2.score++;
+        refreshScoreboard();
+        
+        if (player1.score === maxWinningRounds || player2.score === maxWinningRounds) {
+            const winner = player1.score === maxWinningRounds ? player1 : player2;
+            
+            if (isMultiplayerOnline) {
+                if (amIRoomHost) {
+                    handleFinalGameVictory(winner);
+                } else {
+                    showVictoryPopupOnly(winner);
+                }
+            } else {
+                
+                handleFinalGameVictory(winner);
+            }
+        } else {
+            triggerRoundTransition(player1.sign === currentPlayer ? player1.name : player2.name);
+        }
+        return;
+    }
             }
             if(!gameState.includes("")) { isGameActive = false; triggerRoundTransition("Remis"); }
             else { currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateStatusText(); }
@@ -823,8 +849,6 @@
         cells.forEach(c => c.addEventListener('click', handleCellClick));
         document.getElementById('reset-btn').addEventListener('click', () => { if(isMultiplayerOnline && netConnection) netConnection.close(); backToMenu(); });
         document.getElementById('popup-close-btn').addEventListener('click', backToMenu);
-
-        // Wywołanie sesji na start
         authScreen.style.display = 'block';
     </script>
 </body>
