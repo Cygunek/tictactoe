@@ -839,9 +839,11 @@
         }
 
         cells.forEach(c => c.addEventListener('click', handleCellClick));
-        document.getElementById('reset-btn').addEventListener('click', () => { if(isMultiplayerOnline && netConnection) netConnection.close(); backToMenu(); });
-        document.getElementById('popup-close-btn').addEventListener('click', backToMenu);
-        authScreen.style.display = 'block';
+    document.getElementById('reset-btn').addEventListener('click', () => { if(isMultiplayerOnline && netConnection) netConnection.close(); backToMenu(); });
+    document.getElementById('popup-close-btn').addEventListener('click', backToMenu);
+    authScreen.style.display = 'block';
+
+});
     </script>
 </body>
 </html>
