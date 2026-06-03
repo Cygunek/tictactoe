@@ -374,15 +374,17 @@
     <footer>© Copyright 2026 All Rights Reserved | Wsparcie: <a href="mailto:pomoc@kolokrzyzyk.pl">pomoc@kolokrzyzyk.pl</a></footer>
 
     <script>
-        // ==========================================
-        //  ⚠️ TUTAJ KONIECZNIE WKLEJ SWOJE DANE SQL SUPABASE:
-        // ==========================================
-   _supabase = supabase.createClient(
-    "https://lmetjyrsbumovtflgwzn.supabase.co", 
-    "PvUkh6a571xZm4C0ZodNw2aHxkS9DC5Yexl42TX4pN836KRU6tokJpcfzzKROb4S7BUGZmSibg1tzHrLzwyJeg=="
-);
-console.log("Supabase zainicjalizowane:", !!_supabase);
-
+ let _supabase = null;
+    let loggedUser = null;
+    try {
+        const SUPABASE_URL = "https://lmetjyrsbumovtflgwzn.supabase.co";
+        const SUPABASE_ANON_KEY = "PvUkh6a571xZm4C0ZodNw2aHxkS9DC5Yexl42TX4pN836KRU6tokJpcfzzKROb4S7BUGZmSibg1tzHrLzwyJeg==";
+        
+        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase zainicjalizowane pomyślnie.");
+    } catch (e) {
+        console.error("Błąd inicjalizacji:", e);
+    }
         let loggedUser = null; 
 
         const authScreen = document.getElementById('auth-screen');
