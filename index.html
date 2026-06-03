@@ -764,7 +764,7 @@
             }
             if(!gameState.includes("")) { isGameActive = false; triggerRoundTransition("Remis"); }
             else { currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateStatusText(); }
-        }
+        
 
         function triggerRoundTransition(res) {
             currentRoundNumber++;
