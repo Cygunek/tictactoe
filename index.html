@@ -377,17 +377,9 @@
  let _supabase = null;
     let loggedUser = null;
     try {
-        const SUPABASE_URL = "https://lmetjyrsbumovtflgwzn.supabase.co";
-        const SUPABASE_ANON_KEY = "PvUkh6a571xZm4C0ZodNw2aHxkS9DC5Yexl42TX4pN836KRU6tokJpcfzzKROb4S7BUGZmSibg1tzHrLzwyJeg==";
-        
-_supabase = supabase.createClient(
-    "https://lmetjyrsbumovtflgwzn.supabase.co", 
-    "sb_publishable_J0cj28Wn6LnITRbOTif2ZQ_u9YPMS5K"
-);
-console.log("Supabase zainicjalizowane!");
-    } catch (e) {
-        console.error("Błąd inicjalizacji:", e);
-    }
+        _supabase = supabase.createClient("https://lmetjyrsbumovtflgwzn.supabase.co", "sb_publishable_J0cj28Wn6LnITRboTif2ZQ_u9YPMS5K");
+        console.log("Supabase zainicjalizowane");
+    } catch (e) { console.error("Błąd init:", e); }
 
         const authScreen = document.getElementById('auth-screen');
         const setupScreen = document.getElementById('setup-screen');
@@ -405,8 +397,8 @@ console.log("Supabase zainicjalizowane!");
         const authUserIn = document.getElementById('auth-username');
         const authPassIn = document.getElementById('auth-password');
 
-        let player1 = { name: "Gracz 1", sign: "X", score: 0 };
-        let player2 = { name: "Gracz 2", sign: "O", score: 0 };
+       let player1 = { name: "Gracz 1", sign: "X", score: 0 };
+    let player2 = { name: "Gracz 2", sign: "O", score: 0 };
         let currentPlayer = 'X';
         let gameState = ["", "", "", "", "", "", "", "", ""];
         let isGameActive = true;
